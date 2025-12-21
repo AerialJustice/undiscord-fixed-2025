@@ -1670,6 +1670,7 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
                 toolbar.insertBefore(ui.undiscordBtn, toolbar.firstChild);
             }
         }
+        mountBtn();
 
         // watch for changes and re-mount button if necessary
         const discordElm = document.body;
