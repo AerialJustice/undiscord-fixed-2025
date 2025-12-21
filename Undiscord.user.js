@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Undiscord (Fixed by Aerial - 12/21/2025)
 // @description     Delete all messages in a Discord channel or DM
-// @version         5.3.0
+// @version         5.3.1
 // @author          AerialJustice
 // @homepageURL     https://github.com/AerialJustice/undiscord-fixed-2025
 // @supportURL      https://github.com/AerialJustice/undiscord-fixed-2025/discussions
@@ -19,7 +19,7 @@
     'use strict';
 
     /* rollup-plugin-baked-env */
-    const VERSION = "5.3.0";
+    const VERSION = "5.3.1";
 
     var themeCss = (`
 /*
@@ -1659,21 +1659,17 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
         ui.undiscordBtn = createElm(buttonHtml);
         ui.undiscordBtn.onclick = toggleWindow;
 
-        function mountBtn() {
-            let anchor = document.querySelector('[aria-label="Inbox"]') || document.querySelector('[aria-label="Help"]');
-            if (anchor) {
-                const buttonContainer = anchor.closest('[role="button"]') || anchor.closest('.clickable_') || anchor;
-                const toolbar = buttonContainer.parentElement;
-                if (toolbar && !toolbar.contains(ui.undiscordBtn)) {
-                    try {
-                        toolbar.insertBefore(ui.undiscordBtn, buttonContainer);
-                    } catch (e) {
-                        toolbar.appendChild(ui.undiscordBtn);
-                    }
-                }
+        function mountBtn() { // BenjaminBoho
+            let toolbar = document.querySelector('[class*="toolbar"]') ||
+                document.querySelector('[role="toolbar"]') ||
+                document.querySelector('[class*="header"] [role="navigation"]');
+
+            if (!toolbar) return;
+
+            if (!toolbar.contains(ui.undiscordBtn)) {
+                toolbar.insertBefore(ui.undiscordBtn, toolbar.firstChild);
             }
         }
-        mountBtn();
 
         // watch for changes and re-mount button if necessary
         const discordElm = document.body;
