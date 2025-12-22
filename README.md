@@ -29,7 +29,7 @@
 2. **Install the Script:**  
    Click the link below and press **"Install"** when the tab opens.
 
-   ## [👉 CLICK HERE TO INSTALL SCRIPT 👈](https://raw.githubusercontent.com/AerialJustice/undiscord-fixed-2025/main/Undiscord.user.js)
+   ## [👉 CLICK HERE TO INSTALL SCRIPT 👈](https://github.com/AerialJustice/undiscord-fixed-2025/raw/refs/heads/master/Undiscord.user.js)
 
 ----
 
