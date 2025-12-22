@@ -10,7 +10,7 @@
 > ⚠️ **Any tool that automates actions on user accounts, including this one, could result in account termination.**  
 > Use at your own risk!
 
-## ✨ New Features in this Version (v5.3.1)
+## ✨ New Features in this Version (v5.3.2)
 *   **📸 Interactive Media Mode:** Scan for images/videos and view them in a visual grid before deleting.
 *   **💾 Smart Backups:** Auto-download media before deleting.
 *   **📂 Organized Folders:** Saves files into `Downloads\Undiscord_Media\User\Server\Channel\`.
