@@ -1,11 +1,12 @@
 // ==UserScript==
-// @name            Undiscord (Fixed by Aerial - 12/21/2025)
-// @description     Delete all messages in a Discord channel or DM
-// @version         5.3.1
+// @name            Undiscord by Aerial
+// @description     Delete and Backup all messages and media in Discord
+// @version         5.3.2
 // @author          AerialJustice
 // @homepageURL     https://github.com/AerialJustice/undiscord-fixed-2025
 // @supportURL      https://github.com/AerialJustice/undiscord-fixed-2025/discussions
-// @supportURL      https://github.com/victornpb/undiscord/discussions
+// @updateURL       https://github.com/AerialJustice/undiscord-fixed-2025/raw/refs/heads/master/Undiscord.user.js
+// @downloadURL     https://github.com/AerialJustice/undiscord-fixed-2025/raw/refs/heads/master/Undiscord.user.js
 // @match           https://*.discord.com/app
 // @match           https://*.discord.com/channels/*
 // @match           https://*.discord.com/login
@@ -19,130 +20,53 @@
     'use strict';
 
     /* rollup-plugin-baked-env */
-    const VERSION = "5.3.1";
+    const VERSION = "5.3.2";
 
     var themeCss = (`
-/*
-  UNDISCORD STANDALONE THEME
-*/
+/* UNDISCORD STANDALONE THEME */
 :root {
-  --u-bg: #313338;           /* Main Chat Background */
-  --u-sidebar-bg: #2b2d31;   /* Sidebar Background */
-  --u-header-bg: #2b2d31;    /* Header/Toolbar Background */
-  --u-header-text: #f2f3f5;  /* Header Title */
-  --u-text: #dbdee1;         /* Main Text */
-  --u-desc: #949ba4;         /* Descriptions */
-  --u-label: #b5bac1;        /* Labels */
-  --u-border: #1e1f22;       /* Borders */
-  --u-input-bg: #1e1f22;     /* Input Fields */
-  --u-btn-bg: #4e5058;       /* Default Buttons */
-  --u-btn-color: #ffffff;    /* Button Text */
-  --u-scroll-thumb: #1a1b1e; /* Scrollbar */
+  --u-bg: #313338;
+  --u-sidebar-bg: #2b2d31;
+  --u-header-bg: #2b2d31;
+  --u-header-text: #f2f3f5;
+  --u-text: #dbdee1;
+  --u-desc: #949ba4;
+  --u-label: #b5bac1;
+  --u-border: #1e1f22;
+  --u-input-bg: #1e1f22;
+  --u-btn-bg: #4e5058;
+  --u-btn-color: #ffffff;
+  --u-scroll-thumb: #1a1b1e;
 }
 
 /* MAIN WINDOW */
-#undiscord.browser {
-    box-shadow: 0 0 0 1px var(--u-border), 0 2px 10px 0 rgba(0,0,0,0.2);
-    border: none;
-    overflow: hidden;
-}
-#undiscord.container,
-#undiscord .container {
-    background-color: var(--u-bg);
-    border-radius: 8px;
-    box-sizing: border-box;
-    cursor: default;
-    flex-direction: column;
-}
-
-/* MINIMIZED MODE (COMPACT) */
-#undiscord.minimized {
-    height: auto !important;
-    min-height: 0 !important;
-    transition: height 0.2s ease;
-    overflow: hidden;
-    background-color: var(--u-header-bg) !important; /* Force Dark Header Color */
-    box-shadow: none !important; /* Optional: Looks cleaner without shadow when minimized */
-}
-
-/* HIDE THESE when minimized */
-#undiscord.minimized .sidebar,
-#undiscord.minimized .logarea,
-#undiscord.minimized .footer,
-#undiscord.minimized .resize-handle {
-    display: none !important;
-}
-
-/* KEEP THESE VISIBLE but auto-height */
-#undiscord.minimized .window-body,
-#undiscord.minimized .main {
-    height: auto !important;
-    flex-grow: 0 !important;
-    min-height: 0 !important;
-}
+#undiscord.browser { box-shadow: 0 0 0 1px var(--u-border), 0 2px 10px 0 rgba(0,0,0,0.2); border: none; overflow: hidden; }
+#undiscord.container, #undiscord .container { background-color: var(--u-bg); border-radius: 8px; box-sizing: border-box; cursor: default; flex-direction: column; }
+#undiscord.minimized { height: auto !important; min-height: 0 !important; transition: height 0.2s ease; overflow: hidden; background-color: var(--u-header-bg) !important; box-shadow: none !important; }
+#undiscord.minimized .sidebar, #undiscord.minimized .logarea, #undiscord.minimized .footer, #undiscord.minimized .resize-handle { display: none !important; }
+#undiscord.minimized .window-body, #undiscord.minimized .main { height: auto !important; flex-grow: 0 !important; min-height: 0 !important; }
 
 /* HEADER */
-#undiscord .header {
-    background-color: var(--u-header-bg);
-    height: 48px;
-    align-items: center;
-    min-height: 48px;
-    padding: 0 16px;
-    display: flex;
-    color: var(--u-header-text);
-    cursor: grab;
-    border-bottom: 1px solid var(--u-border);
-
-    /* FIX: Force full width */
-    width: 100%;
-    box-sizing: border-box;
-}
+#undiscord .header { background-color: var(--u-header-bg); height: 48px; align-items: center; min-height: 48px; padding: 0 16px; display: flex; color: var(--u-header-text); cursor: grab; border-bottom: 1px solid var(--u-border); width: 100%; box-sizing: border-box; }
 #undiscord .header .icon { color: #b5bac1; margin-right: 8px; flex-shrink: 0; width: 24; height: 24; cursor: pointer; }
 #undiscord .header .icon:hover { color: #dbdee1; }
 #undiscord .header h3 { font-size: 16px; line-height: 20px; font-weight: 600; font-family: var(--font-display); color: var(--u-header-text); flex-shrink: 0; margin-right: 16px; }
 #undiscord .spacer { flex-grow: 1; }
 #undiscord .header .vert-divider { width: 1px; height: 24px; background-color: var(--u-border); margin-right: 16px; flex-shrink: 0; }
-
-/* STATUS TEXT IN HEADER */
-#undiscord .status-text {
-    color: #dbdee1;
-    font-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-left: 15px;
-    font-family: Consolas, monospace;
-    opacity: 1;
-    display: none; /* Default Hidden */
-}
-#undiscord.minimized .status-text { display: inline-block; } /* Show when minimized */
+#undiscord .status-text { color: #dbdee1; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 15px; font-family: Consolas, monospace; opacity: 1; display: none; }
+#undiscord.minimized .status-text { display: inline-block; }
 #undiscord .status-text.active { color: #00b0f4; }
 
-/* COLORED STATS & FOOTER FIXES */
+/* STATS */
 .stat-box { display: inline-block; white-space: pre; }
 .stat-progress { width: auto; text-align: left; }
-.stat-elapsed { color: #00b0f4; font-weight: 600; margin-left: 8px; white-space: nowrap; } /* Cyan */
-.stat-remaining { color: #faa61a; font-weight: 600; margin-left: 8px; white-space: nowrap; } /* Orange */
+.stat-elapsed { color: #00b0f4; font-weight: 600; margin-left: 8px; white-space: nowrap; }
+.stat-remaining { color: #faa61a; font-weight: 600; margin-left: 8px; white-space: nowrap; }
+.value-badge { display: inline-block; background-color: #111; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-family: Consolas, monospace; margin-left: 8px; vertical-align: middle; }
 
-/* VALUE BADGES (For Sliders) */
-.value-badge {
-    display: inline-block;
-    background-color: #111;
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-family: Consolas, monospace;
-    margin-left: 8px;
-    vertical-align: middle;
-}
-
-/* CATEGORY TITLES (Summary) - CYAN */
+/* GENERAL UI */
 #undiscord summary { color: #00b0f4; font-size: 16px; font-weight: 500; line-height: 20px; position: relative; overflow: hidden; margin-bottom: 2px; padding: 6px 10px; cursor: pointer; white-space: nowrap; text-overflow: ellipsis; border-radius: 4px; flex-shrink: 0; }
-
-/* TEXT & LABELS */
-#undiscord legend,
-#undiscord label { color: var(--u-label); font-size: 12px; line-height: 16px; font-weight: 600; text-transform: uppercase; cursor: default; font-family: var(--font-display); margin-bottom: 8px; }
+#undiscord legend, #undiscord label { color: var(--u-label); font-size: 12px; line-height: 16px; font-weight: 600; text-transform: uppercase; cursor: default; font-family: var(--font-display); margin-bottom: 8px; }
 #undiscord .sectionDescription { margin-bottom: 16px; color: var(--u-desc); font-size: 14px; line-height: 20px; font-weight: 400; }
 #undiscord a { color: #00b0f4; text-decoration: none; }
 #undiscord a:hover { text-decoration: underline; }
@@ -151,26 +75,15 @@
 #undiscord .multiInput { display: flex; align-items: center; font-size: 16px; box-sizing: border-box; width: 100%; border-radius: 3px; color: var(--u-text); background-color: var(--u-input-bg); border: none; transition: border-color 0.2s ease-in-out 0s; }
 #undiscord .multiInput :first-child { flex-grow: 1; }
 #undiscord .multiInput button:last-child { margin-right: 4px; }
-
-/* INPUT WRAPPER & PREFIX */
 #undiscord .input-wrapper { display: flex; align-items: center; font-size: 16px; box-sizing: border-box; width: 100%; border-radius: 3px; color: var(--u-text); background-color: var(--u-input-bg); border: none; transition: border-color 0.2s ease-in-out 0s; padding-left: 10px; padding-right: 10px; }
 #undiscord .prefix { color: #72767d; font-weight: 600; font-size: 12px; margin-right: 8px; white-space: nowrap; font-family: var(--font-display); text-transform: uppercase; margin-top: 1px; }
-
-#undiscord input[type="text"],
-#undiscord input[type="search"],
-#undiscord input[type="password"],
-#undiscord input[type="datetime-local"],
-#undiscord input[type="number"],
-#undiscord input[type="range"] { background-color: transparent; border: none; border-radius: 4px; box-sizing: border-box; color: var(--u-text); font-size: 16px; height: 40px; padding: 10px 0; transition: border-color .2s ease-in-out; width: 100%; }
+#undiscord input[type="text"], #undiscord input[type="search"], #undiscord input[type="password"], #undiscord input[type="datetime-local"], #undiscord input[type="number"], #undiscord input[type="range"] { background-color: transparent; border: none; border-radius: 4px; box-sizing: border-box; color: var(--u-text); font-size: 16px; height: 40px; padding: 10px 0; transition: border-color .2s ease-in-out; width: 100%; }
 #undiscord input:focus { outline: none; }
-
 #undiscord fieldset { margin-top: 16px; }
-#undiscord .divider,
-#undiscord hr { border: none; margin-bottom: 24px; padding-bottom: 4px; border-bottom: 1px solid var(--u-border); }
+#undiscord .divider, #undiscord hr { border: none; margin-bottom: 24px; padding-bottom: 4px; border-bottom: 1px solid var(--u-border); }
 
-/* BUTTONS */
-#undiscord .btn,
-#undiscord button { position: relative; display: flex; justify-content: center; align-items: center; box-sizing: border-box; background: none; border: none; border-radius: 3px; font-size: 14px; font-weight: 500; line-height: 16px; padding: 2px 16px; user-select: none; width: 60px; height: 32px; min-width: 60px; min-height: 32px; color: var(--u-btn-color); background-color: var(--u-btn-bg); transition: background-color .17s ease; cursor: pointer; }
+/* SIDEBAR BUTTONS */
+#undiscord .btn, #undiscord button { position: relative; display: flex; justify-content: center; align-items: center; box-sizing: border-box; background: none; border: none; border-radius: 3px; font-size: 14px; font-weight: 500; line-height: 16px; padding: 2px 16px; user-select: none; width: 60px; height: 32px; min-width: 60px; min-height: 32px; color: var(--u-btn-color); background-color: var(--u-btn-bg); transition: background-color .17s ease; cursor: pointer; }
 #undiscord button:hover { background-color: #6d6f78; }
 #undiscord button:disabled { opacity: 0.5; cursor: not-allowed; }
 #undiscord .sizeMedium { width: 96px; height: 38px; min-width: 96px; min-height: 38px; }
@@ -185,13 +98,6 @@
 #undiscord .scroll::-webkit-scrollbar-thumb { background-clip: padding-box; border: 2px solid transparent; border-radius: 4px; background-color: var(--u-scroll-thumb); min-height: 40px; }
 #undiscord .scroll::-webkit-scrollbar-track { border-color: transparent; background-color: transparent; border: 2px solid transparent; }
 
-/* UTILS */
-#undiscord sup { vertical-align: top; }
-#undiscord .info { font-size: 12px; line-height: 16px; padding: 8px 10px; color: var(--u-desc); }
-#undiscord .col { display: flex; flex-direction: column; }
-#undiscord .row { display: flex; flex-direction: row; align-items: center; }
-#undiscord .mb1 { margin-bottom: 8px; }
-
 /* LOGS */
 #undiscord .log { margin-bottom: 0.25em; font-family: Consolas, monospace; }
 #undiscord .log-debug { color: #f2f3f5; }
@@ -202,6 +108,14 @@
 #undiscord .log-error { color: #f04747; }
 #undiscord .log-success { color: #23a559; }
 
+/* UTILS */
+#undiscord sup { vertical-align: top; }
+#undiscord .info { font-size: 12px; line-height: 16px; padding: 8px 10px; color: var(--u-desc); }
+#undiscord .infov { font-size: 12px; line-height: 13px; padding: 20px 8px; color: var(--u-desc); }
+#undiscord .col { display: flex; flex-direction: column; }
+#undiscord .row { display: flex; flex-direction: row; align-items: center; }
+#undiscord .mb1 { margin-bottom: 8px; }
+
 /* STREAMER MODE */
 #undiscord.redact .priv { display: none !important; }
 #undiscord.redact x:not(:active) { color: transparent !important; background-color: var(--u-btn-bg) !important; cursor: default; user-select: none; border-radius: 3px; }
@@ -209,9 +123,118 @@
 #undiscord.redact x:hover::after { content: "Redacted information (Streamer mode: ON)"; position: absolute; display: inline-block; top: -32px; left: -20px; padding: 4px; width: 150px; font-size: 8pt; text-align: center; white-space: pre-wrap; background-color: #111; box-shadow: 0 4px 8px rgba(0,0,0,0.5); color: #fff; border-radius: 5px; pointer-events: none; z-index: 1000; }
 #undiscord.redact [priv] { -webkit-text-security: disc !important; }
 #undiscord :disabled { display: none; }
+
+/* === MEDIA MODAL OVERLAY (Fullscreen) === */
+#undiscord-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+#undiscord-modal .modal-content {
+    background: var(--u-bg);
+    width: 90%;
+    height: 90%;
+
+    /* RESIZABLE */
+    resize: both;
+    overflow: hidden;
+    min-width: 600px; min-height: 400px;
+    max-width: 98vw; max-height: 98vh;
+    border-radius: 8px;
+    border: 1px solid var(--u-border);
+    display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+#undiscord-modal .modal-header { padding: 15px; border-bottom: 1px solid var(--u-border); background: var(--u-header-bg); display: flex; justify-content: space-between; align-items: center; }
+
+/* 2x6 GRID LAYOUT FOR BUTTONS */
+#undiscord-modal .modal-footer {
+    padding: 15px;
+    border-top: 1px solid var(--u-border);
+    background: var(--u-header-bg);
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 Columns */
+    grid-template-rows: auto auto;         /* 2 Rows */
+    gap: 10px;
+    align-items: center;
+}
+
+#undiscord-modal .gallery {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-auto-rows: 220px;
+    gap: 15px;
+}
+
+/* THUMBNAIL CARDS */
+.media-card { position: relative; border: 2px solid var(--u-border); border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.2s; background: #000; height: 100%; display: flex; flex-direction: column; }
+.media-card img, .media-card video { width: 100%; height: 100%; object-fit: contain; background: #111; }
+.media-card:hover { transform: translateY(-2px); border-color: #dbdee1; }
+
+/* BADGES & OVERLAYS */
+.file-badge { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.8); color: #00b0f4; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; z-index: 10; pointer-events: none; }
+.jump-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.8); color: #fff; width: 20px; height: 20px; border-radius: 4px; z-index: 20; display: flex; align-items: center; justify-content: center; font-size: 12px; text-decoration: none; }
+.jump-btn:hover { background: #00b0f4; }
+.file-name { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #dbdee1; font-size: 12px; text-align: center; width: 90%; word-wrap: break-word; z-index: 5; pointer-events: none; background: rgba(0,0,0,0.6); padding: 4px; border-radius: 4px; }
+
+/* SELECTED STATE */
+.media-card.selected { border-color: #23a559; box-shadow: 0 0 0 2px #23a559; }
+.media-card.selected::after { content: "✔"; position: absolute; bottom: 30px; right: 5px; background: #23a559; color: white; width: 24px; height: 24px; border-radius: 50%; text-align: center; line-height: 24px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10; }
+.media-info { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); color: white; font-size: 10px; padding: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+
+/* === The Sexiness === */
+.neon-btn {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid rgba(255, 255, 0, 0.4) !important;
+    color: #ffd700 !important; /* Yellow */
+    border-radius: 8px !important;
+    padding: 2px 5px !important;
+    height: 50px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.1);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    font-size: 10px !important; /* Smaller text for grid */
+    width: 100% !important;
+    white-space: normal !important; /* Allow multi-line */
+    line-height: 1.2 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+.neon-btn:hover {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    transform: translateY(-1px);
+    color: #fff !important;
+}
+.neon-btn:active { transform: translateY(1px); }
+
+.neon-danger {
+    border-color: rgba(255, 0, 0, 0.4) !important;
+    color: #ff4444 !important;
+}
+.neon-danger:hover {
+    border-color: #ff0000 !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+    color: #fff !important;
+}
+
 `);
 
-var mainCss = (`
+    var mainCss = (`
 /**** Undiscord Button ****/
 #undicord-btn {
     position: relative;
@@ -235,8 +258,8 @@ var mainCss = (`
 
 /* RUNNING STATE: RED */
 #undicord-btn.running { color: #da373c !important; }
-
 #undicord-btn.running progress { display: block; }
+
 /**** Undiscord Interface ****/
 #undiscord {
     position: fixed;
@@ -245,11 +268,9 @@ var mainCss = (`
     right: 10px;
     display: flex;
     flex-direction: column;
-    width: 800px;
-    height: 80vh;
-
+    width: 850px;
+    height: 800px;
     min-width: 720px;
-
     max-width: 100vw;
     min-height: 448px;
     max-height: 100vh;
@@ -321,14 +342,7 @@ var mainCss = (`
 #undiscord summary { font-size: 16px; font-weight: 500; line-height: 20px; position: relative; overflow: hidden; margin-bottom: 2px; padding: 6px 10px; cursor: pointer; white-space: nowrap; text-overflow: ellipsis; color: #00b0f4; border-radius: 4px; flex-shrink: 0; }
 #undiscord fieldset { padding-left: 8px; }
 #undiscord legend a { float: right; text-transform: initial; }
-
-/* PROGRESS BAR FIX (Static Width) */
-#undiscord progress {
-    height: 8px;
-    margin-top: 4px;
-    width: 100%;
-}
-
+#undiscord progress { height: 8px; margin-top: 4px; width: 100%; }
 #undiscord .importJson { display: flex; flex-direction: row; }
 #undiscord .importJson button { margin-left: 5px; width: fit-content; }
 `);
@@ -368,8 +382,6 @@ var mainCss = (`
         <div class="vert-divider"></div>
         <span id="status" class="status-text"> Ready</span>
         <div class="spacer"></div>
-
-        <!-- MINIMIZE BUTTON -->
         <div id="btnMinimize" class="icon" aria-label="Minimize" role="button" tabindex="0">
             <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M6 11H18V13H6z"></path></svg>
         </div>
@@ -385,41 +397,41 @@ var mainCss = (`
                 <summary>General <a href="https://github.com/victornpb/undiscord/wiki" title="Wiki" target="_blank" rel="noopener noreferrer" style="float: right;">How to</a></summary>
 
                 <div class="multiInput mb1" style="margin-top: 15px;">
-                    <div class="input-wrapper">
-                        <span class="prefix">AUTHOR ID:</span>
-                        <input class="input" id="authorId" type="text" priv>
-                    </div>
+                    <div class="input-wrapper"><span class="prefix">AUTHOR ID:</span><input class="input" id="authorId" type="text" priv></div>
                     <button id="getAuthor">me</button>
                 </div>
 
                 <div class="multiInput mb1">
-                    <div class="input-wrapper">
-                        <span class="prefix">SERVER ID:</span>
-                        <input class="input" id="guildId" type="text" priv>
-                    </div>
+                    <div class="input-wrapper"><span class="prefix">SERVER ID:</span><input class="input" id="guildId" type="text" priv></div>
                     <button id="getGuild">current</button>
                 </div>
-
                 <div class="multiInput mb1">
-                    <div class="input-wrapper">
-                        <span class="prefix">CHANNEL ID:</span>
-                        <input class="input" id="channelId" type="text" priv>
-                    </div>
+                    <div class="input-wrapper"><span class="prefix">CHANNEL ID:</span><input class="input" id="channelId" type="text" priv></div>
                     <button id="getChannel">current</button>
                 </div>
-
-                <div class="sectionDescription" style="margin-bottom: 8px;">
-                    <label class="row"><input id="includeNsfw" type="checkbox">This is a NSFW channel</label>
-                </div>
-
+                <div class="sectionDescription"><label class="row"><input id="includeNsfw" type="checkbox">This is a NSFW channel</label></div>
                 <div class="multiInput mb1">
-                    <div class="input-wrapper">
-                        <span class="prefix">TOKEN:</span>
-                        <input class="input" id="token" type="text" autocomplete="dont" priv>
-                    </div>
+                    <div class="input-wrapper"><span class="prefix">TOKEN:</span><input class="input" id="token" type="text" autocomplete="dont" priv></div>
                     <button id="getToken">fill</button>
                 </div>
                 <hr>
+            </details>
+            <details>
+                <summary>Media Mode (Backup)</summary>
+                <fieldset>
+                    <legend>Interactive Scanner</legend>
+                    <div class="sectionDescription">
+                        <label><input id="mediaMode" type="checkbox" style="accent-color: #00b0f4;"> <b>Enable Media Scanner</b></label>
+                    </div>
+                    <div class="sectionDescription" style="margin-top: 10px;">
+                        <b>Scan Strategy:</b><br /><br />
+                        <label><input type="radio" name="mediaStrategy" id="stratMediaOnly" value="media" checked> <b>Media Only</b></label>
+                        <div style="font-size: 14px; margin-left: 22px; margin-top: -8px; color: #949ba4;">Strict. Skips all text messages.</div><br />
+
+                        <label><input type="radio" name="mediaStrategy" id="stratAll" value="all"> <b>Scan ALL</b></label>
+                        <div style="font-size: 14px; margin-left: 22px; margin-top: -8px; color: #949ba4;">Includes Text + Media.</div>
+                    </div>
+                </fieldset>
             </details>
             <details>
                 <summary>Time Delays</summary>
@@ -438,7 +450,15 @@ var mainCss = (`
             <details>
                 <summary>Filter</summary>
                 <fieldset>
-                    <legend>Search <a href="{{WIKI}}/filters" title="Help" target="_blank" rel="noopener noreferrer">help</a></legend>
+                    <legend>Inverse Filter (Skip)</legend>
+                    <div class="sectionDescription">If checked, messages containing these will be <b>IGNORED</b> (saved).</div>
+                    <div class="sectionDescription"><label><input id="skipLink" type="checkbox">Skip: link</label></div>
+                    <div class="sectionDescription"><label><input id="skipFile" type="checkbox">Skip: file</label></div>
+                    <div class="sectionDescription"><label><input id="skipPinned" type="checkbox">Skip: pinned</label></div>
+                </fieldset>
+                <hr>
+                <fieldset>
+                    <legend>Standard Filter</legend>
                     <div class="input-wrapper"><input id="search" type="text" placeholder="Containing text" priv></div>
                     <div class="sectionDescription">Only delete messages that contain the text</div>
                     <div class="sectionDescription"><label><input id="hasLink" type="checkbox">has: link</label></div>
@@ -501,10 +521,6 @@ var mainCss = (`
                     <label><input id="autoClear" type="checkbox"> Auto Clear</label>
                     <div class="sectionDescription" style="margin-left: 20px;">Just clears your log window every hour to prevent lag.</div>
                 </div>
-                <div class="input-wrapper">
-                    <button id="btnLogClear" class="sizeMedium" style="width: 100px;">Clear Log</button>
-                    <div class="sectionDescription" style="margin-top: 5px; margin-left: 10px;">Manually clears the log window.</div>
-                </div>
             </details>
             <hr>
             <details>
@@ -512,43 +528,73 @@ var mainCss = (`
                 <fieldset>
                     <legend>Import index.json <a href="{{WIKI}}/importJson" title="Help" target="_blank" rel="noopener noreferrer">help</a></legend>
                     <div class="input-wrapper"><input type="file" id="importJsonInput" accept="application/json,.json" style="width:100%";></div>
-                    <div class="sectionDescription"><br>After requesting your data from discord, you can import it here.<br>Select the "messages/index.json" file from the discord archive.</div>
+                    <div class="sectionDescription"><br>Select the "messages/index.json" file from the discord archive.</div>
                 </fieldset>
             </details>
             <hr>
-            <div class="info">Undiscord {{VERSION}} - AerialJustice</div>
+            <div class="infov">Undiscord {{VERSION}} - AerialJustice</div>
         </div>
         <div class="main col">
             <div class="tbar col">
                 <div class="row">
                     <button id="toggleSidebar" class="sizeMedium icon">☰</button>
-                    <button id="start" class="sizeMedium danger" title="Start the deletion process">▶︎ Delete</button>
-                    <button id="stop" class="sizeMedium" title="Stop the deletion process" disabled>🛑 Stop</button>
+                    <button id="start" class="sizeMedium danger">▶︎ Delete</button>
+                    <button id="stop" class="sizeMedium" disabled>🛑 Stop</button>
                     <button id="copy" class="sizeMedium">Copy log</button>
                     <button id="clear" class="sizeMedium">Clear log</button>
-                    <label class="row" title="Hide sensitive information on your screen for taking screenshots"><input id="redact" type="checkbox" checked> Streamer mode</label>
+                    <label class="row"><input id="redact" type="checkbox" checked> Streamer mode</label>
                 </div>
                 <div class="row">
                     <progress id="progressBar" style="display:none;"></progress>
                 </div>
             </div>
             <pre id="logArea" class="logarea scroll">
-<div id="guide-container" style="margin-top: -25px;">
-    <div style="height: 20px; padding-top: 6px;"><--- Click this button to autofill.</div>
-    <div style="height: 20px; padding-top: 2px;"><--- Open a Server or DM, then click this button. Everytime you click another DM,<br />click this again to update the Server and Channel fields.</div>
-    <div style="height: 20px; padding-top: 2px;"><--- If not a DM (Ex: on a Server), enter the channel first, then click this<br /> button after clicking the Server ID button above. Remember to click this for<br /> each new server/dm/channel you want to delete from.</div>
-    <div style="height: 35px; padding-top: 32px;"><--- If Auto isn't working, click this button and try again. Otherwise leave it blank.</div><div style="color: #f04747; margin-top: 0px; line-height: 1.3;"><b>WARNING!</b> Careful with your auth token! If anyone has access to it,<br />they can post as you in any server without having access to your account.<br />If you think you were compromised, change your Discord password,<br />which resets your token.</div>
-</div>
-<center style="margin-top: 30px;">
-    <div>Star <a href="{{HOME}}" target="_blank">this project</a> on GitHub!</div>
-    <div><a href="{{HOME}}/discussions" target="_blank">Issues or help</a></div>
-</center>
+				<div id="guide-container" style="margin-top: -35px;">
+				    <div style="height: 20px; padding-top: 6px;"><--- Click this button to autofill.</div>
+				    <div style="height: 20px; padding-top: 2px;"><--- Open a Server or DM, then click this button. Everytime you click another DM,<br />click this again to update the Server and Channel fields.</div>
+				    <div style="height: 20px; padding-top: 2px;"><--- If not a DM (Ex: on a Server), enter the channel first, then click this<br /> button after clicking the Server ID button above. Remember to click this for<br /> each new server/dm/channel you want to delete from.</div>
+				    <div style="height: 35px; padding-top: 32px;"><--- If Auto isn't working, click this button and try again. Otherwise leave it blank.</div><div style="color: #f04747; margin-top: 0px; line-height: 1.3;"><b>WARNING!</b> Careful with your auth token! If anyone has access to it,<br />they can post as you in any server without having access to your account.<br />If you think you were compromised, change your Discord password,<br />which resets your token.</div>
+				</div>
+				<center style="margin-top: 30px;">
+				    <div>Star <a href="{{HOME}}" target="_blank">this project</a> on GitHub!</div>
+				    <div><a href="{{HOME}}/discussions" target="_blank">Issues or help</a></div>
+				</center>
             </pre>
             <div class="tbar footer row">
                 <div id="progressPercent"></div>
                 <span class="spacer"></span>
                 <label><input id="autoScroll" type="checkbox" checked> Auto scroll</label>
                 <div class="resize-handle"></div>
+            </div>
+        </div>
+    </div>
+    <!-- INTERACTIVE MODAL (2x6 Grid) -->
+    <div id="undiscord-modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color: #00b0f4;">Backup Selection</h3>
+                <div style="font-size: 12px; color: #aaa;">
+                    <b>Click to Select</b> (Green = Download).<br>
+                    Then choose a button below.
+                </div>
+            </div>
+            <div id="media-gallery" class="gallery"></div>
+            <div class="modal-footer">
+                <!-- ROW 1 (Yellow / Safe) -->
+                <button id="btnSelectAll" class="neon-btn">Select All</button>
+                <button id="btnKeepSelected" class="neon-btn">Keep Selected</button>
+                <button id="btnBackupKeepSelected" class="neon-btn">Backup & Keep Selected</button>
+                <button id="btnBackupSelectKeep" class="neon-btn">Backup Selected & Keep ALL</button>
+                <button id="btnBackupAllKeepAll" class="neon-btn">Backup & Keep ALL</button>
+                <button id="btnSkipBatch" class="neon-btn">Skip Batch</button>
+
+                <!-- ROW 2 (Red / Delete) -->
+                <button id="btnDeleteAll" class="neon-btn neon-danger">Delete ALL</button>
+                <button id="btnDeleteSelected" class="neon-btn neon-danger">Delete Selected</button>
+                <button id="btnBackupDeleteSelected" class="neon-btn neon-danger">Backup & Delete Selected</button>
+                <button id="btnBackupSelectDelete" class="neon-btn neon-danger">Backup Selected & Delete ALL</button>
+                <button id="btnBackupAllDeleteAll" class="neon-btn neon-danger">Backup & Delete ALL</button>
+                <button id="btnStop" class="neon-btn neon-danger">ABORT</button>
             </div>
         </div>
     </div>
@@ -601,19 +647,36 @@ var mainCss = (`
 
     // HELPER: Auto-Save Log with Folder Support
     function saveLog(saveMessagesOnly = false) {
-        let text = ui.logArea.innerText;
-        if (saveMessagesOnly) {
-            const lines = text.split('\n').filter(line => /^\s*\[\d+\/\d+\]\s/.test(line.trim()));
-            text = lines.join('\n').trim();
-        }
-        // Windows-Safe Timestamp (yyyy-mm-dd_hh-mm-ss)
+        // 1. Grab all log entries (divs) from the DOM
+        const logEntries = ui.logArea.querySelectorAll('div');
+        let lines = [];
+
+        // 2. Filter and Extract Text
+        logEntries.forEach(entry => {
+            // If "Messages Only" is ON, only save lines with class 'log-debug' (the actual deleted msgs)
+            if (saveMessagesOnly) {
+                if (entry.classList.contains('log-debug')) {
+                    lines.push(entry.innerText.replace(/\n/g, ' ')); // flatten internal newlines
+                }
+            } else {
+                // Otherwise save everything (info, success, warn, etc)
+                lines.push(entry.innerText);
+            }
+        });
+
+        if (lines.length === 0) return; // Nothing to save
+
+        // 3. Join with Windows-style line endings (\r\n) so it's not one continuous line
+        const text = lines.join('\r\n');
+
+        // Timestamp
         const now = new Date();
         const timestamp = now.getFullYear() + "-" +
-                         ("0" + (now.getMonth() + 1)).slice(-2) + "-" +
-                         ("0" + now.getDate()).slice(-2) + "_" +
-                         ("0" + now.getHours()).slice(-2) + "-" +
-                         ("0" + now.getMinutes()).slice(-2) + "-" +
-                         ("0" + now.getSeconds()).slice(-2);
+            ("0" + (now.getMonth() + 1)).slice(-2) + "-" +
+            ("0" + now.getDate()).slice(-2) + "_" +
+            ("0" + now.getHours()).slice(-2) + "-" +
+            ("0" + now.getMinutes()).slice(-2) + "-" +
+            ("0" + now.getSeconds()).slice(-2);
 
         let filename = `Undiscord_Logs/undiscord_log_${timestamp}.txt`;
         if (saveMessagesOnly) {
@@ -621,25 +684,29 @@ var mainCss = (`
         }
 
         if (typeof GM_download !== 'undefined') {
-            console.log("[Undiscord] Using GM_download to save to folder: " + filename);
+            // console.log("[Undiscord] Using GM_download: " + filename);
             GM_download({
-                url: URL.createObjectURL(new Blob([text], { type: 'text/plain' })),
+                url: URL.createObjectURL(new Blob([text], {
+                    type: 'text/plain;charset=utf-8'
+                })),
                 name: filename,
                 saveAs: false,
                 onerror: (err) => {
-                    console.error("[Undiscord] GM_download failed:", err);
-                    // Fallback if permission error
+                    console.error("GM_download failed", err);
+                    // Fallback
                     const a = document.createElement('a');
-                    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+                    a.href = URL.createObjectURL(new Blob([text], {
+                        type: 'text/plain;charset=utf-8'
+                    }));
                     a.download = filename;
                     a.click();
                 }
             });
         } else {
-            console.warn("[Undiscord] GM_download NOT found. Using fallback (Root folder only).");
-            const blob = new Blob([text], { type: 'text/plain' });
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
+            a.href = URL.createObjectURL(new Blob([text], {
+                type: 'text/plain;charset=utf-8'
+            }));
             a.download = filename;
             a.click();
         }
@@ -650,58 +717,63 @@ var mainCss = (`
     /**
      * Delete all messages in a Discord channel or DM
      * @original author: Victornpb <https://www.github.com/victornpb>
-     * @updated: https://github.com/AerialJustice/undiscord-fixed-2025
+     * @updated: Aerial https://github.com/AerialJustice/undiscord-fixed-2025
      * @see https://github.com/victornpb/undiscord
      */
     class UndiscordCore {
-
         options = {
-            authToken: null, // Your authorization token
-            authorId: null, // Author of the messages you want to delete
-            guildId: null, // Server were the messages are located
-            channelId: null, // Channel were the messages are located
-            minId: null, // Only delete messages after this, leave blank do delete all
-            maxId: null, // Only delete messages before this, leave blank do delete all
-            content: null, // Filter messages that contains this text content
-            hasLink: null, // Filter messages that contains link
-            hasFile: null, // Filter messages that contains file
-            includeNsfw: null, // Search in NSFW channels
-            includePinned: null, // Delete messages that are pinned
-            pattern: null, // Only delete messages that match the regex (insensitive)
-            searchDelay: null, // Delay each time we fetch for more messages
-            deleteDelay: null, // Delay between each delete operation
-            maxAttempt: 2, // Attempts to delete a single message if it fails
+            authToken: null,
+            authorId: null,
+            guildId: null,
+            channelId: null,
+            minId: null,
+            maxId: null,
+            content: null,
+            hasLink: null,
+            hasFile: null,
+            includeNsfw: null,
+            includePinned: null,
+            pattern: null,
+            searchDelay: null,
+            deleteDelay: null,
+            maxAttempt: 2,
             askForConfirmation: true,
             autoLog: false,
             saveMessagesOnlyLog: false,
             autoSave: false,
             saveMessagesOnlySave: false,
             autoClear: false,
+            skipLink: null,
+            skipFile: null,
+            skipPinned: null,
+            mediaMode: false,
+            mediaModeType: 'media_only',
+            serverName: "Unknown Server",
+            channelName: "Unknown Channel",
         };
 
         state = {
             running: false,
+            stoppedByUser: false, // Distinguishes "Done" from "Stop"
             delCount: 0,
             failCount: 0,
-            systemCount: 0, // Track undeletable system messages
             grandTotal: 0,
             offset: 0,
             iterations: 0,
             lastLogTime: 0,
-
+            lastId: null,
             _systemMessageIds: new Set(),
-
             _seachResponse: null,
             _messagesToDelete: [],
             _skippedMessages: [],
         };
 
         stats = {
-            startTime: new Date(), // start time
-            throttledCount: 0, // how many times you have been throttled
-            throttledTotalTime: 0, // the total amount of time you spent being throttled
-            lastPing: null, // the most recent ping
-            avgPing: null, // average ping used to calculate the estimated remaining time
+            startTime: new Date(),
+            throttledCount: 0,
+            throttledTotalTime: 0,
+            lastPing: null,
+            avgPing: null,
             etr: 0,
         };
 
@@ -713,124 +785,136 @@ var mainCss = (`
         resetState() {
             this.state = {
                 running: false,
+                stoppedByUser: false, // Reset flag
                 delCount: 0,
                 failCount: 0,
                 grandTotal: 0,
                 offset: 0,
                 iterations: 0,
                 lastLogTime: Date.now(),
-
-                _systemMessageIds: new Set(), // Reset unique set
-
+                lastId: null,
+                _systemMessageIds: new Set(),
                 _seachResponse: null,
                 _messagesToDelete: [],
                 _skippedMessages: [],
             };
-
             this.options.askForConfirmation = true;
         }
 
-        /** Automate the deletion process of multiple channels */
+        async wait(ms) {
+            return new Promise(resolve => {
+                const start = Date.now();
+                const check = () => {
+                    if (!this.state.running) resolve();
+                    else if (Date.now() - start >= ms) resolve();
+                    else setTimeout(check, 1000);
+                };
+                check();
+            });
+        }
+
         async runBatch(queue) {
             if (this.state.running) return log.error('Already running!');
-
             log.info(`Runnning batch with queue of ${queue.length} jobs`);
             for (let i = 0; i < queue.length; i++) {
                 const job = queue[i];
                 log.info('Starting job...', `(${i + 1}/${queue.length})`);
-
-                // set options
                 this.options = {
-                    ...this.options, // keep current options
-                    ...job, // override with options for that job
+                    ...this.options,
+                    ...job
                 };
-
                 await this.run(true);
-                if (!this.state.running) break;
+
+                // CRITICAL FIX: Only break the batch loop if the USER clicked Stop.
+                // If run() finished naturally (running=false), we continue to next job.
+                if (this.state.stoppedByUser) {
+                    log.error('Batch process stopped by user.');
+                    break;
+                }
 
                 log.info('Job ended.', `(${i + 1}/${queue.length})`);
+
+                // Reset for next job, but don't ask confirmation again
                 this.resetState();
                 this.options.askForConfirmation = false;
-                this.state.running = true; // continue running
+                this.state.running = true;
             }
-
             log.info('Batch finished.');
             this.state.running = false;
         }
 
-        /** Start the deletion process */
         async run(isJob = false) {
             if (this.state.running && !isJob) return log.error('Already running!');
 
             this.state.running = true;
             this.stats.startTime = new Date();
             this.state.lastLogTime = Date.now();
-
-            // BATCHING VARIABLES
             let messageBuffer = [];
             const BATCH_SIZE = 50;
             const SCAN_DELAY = 4000;
-
-            // LOOP PREVENTION
             let cleanSweepCount = 0;
-
-            // TIMING VARIABLE
             let cooldownOverride = null;
 
             log.success(`\nStarted at ${this.stats.startTime.toLocaleString()}`);
-            log.debug(
-                `authorId = "${redact(this.options.authorId)}"`,
-                `guildId = "${redact(this.options.guildId)}"`,
-                `channelId = "${redact(this.options.channelId)}"`,
-                `minId = "${redact(this.options.minId)}"`,
-                `maxId = "${redact(this.options.maxId)}"`,
-                `hasLink = ${!!this.options.hasLink}`,
-                `hasFile = ${!!this.options.hasFile}`,
-            );
 
             if (this.onStart) this.onStart(this.state, this.stats);
+
+            if (this.options.mediaMode) {
+                if (this.options.mediaModeType === 'media_only') {
+                    log.info("MEDIA MODE (STRICT): Only scanning files/images.");
+                } else {
+                    log.info("MEDIA MODE (ALL): Scanning everything, buffering media for selection.");
+                }
+            }
 
             do {
                 this.state.iterations++;
                 cooldownOverride = null;
-
-                // AUTO SAVE & CLEAR LOGIC
                 const now = Date.now();
-                if (now - this.state.lastLogTime > 3600000) { // 1 Hour
+
+                if (now - this.state.lastLogTime > 3600000) {
                     if (this.options.autoLog) {
                         saveLog(this.options.saveMessagesOnlyLog);
                         ui.logArea.innerHTML = '';
-                        log.info('Auto-Saved log and cleared screen to prevent lag.');
+                        log.info('Auto-Saved log and cleared screen.');
                     } else if (this.options.autoClear) {
                         ui.logArea.innerHTML = '';
-                        log.info('Auto-Cleared log screen to prevent lag.');
+                        log.info('Auto-Cleared log screen.');
                     }
                     this.state.lastLogTime = now;
                 }
 
                 log.verb('Fetching messages...');
-                // Search messages
-                await this.search();
 
-                // Process results
+                // --- SEARCH ERROR HANDLING ---
+                try {
+                    await this.search();
+                } catch (err) {
+                    // If search threw an error (like 403), state.running might be false now.
+                    if (!this.state.running) break;
+                }
+
+                if (!this.state.running) break;
+
+                // Pagination Tracker
+                const searchData = this.state._seachResponse;
+                if (searchData && searchData.messages && searchData.messages.length > 0) {
+                    const lastConvo = searchData.messages[searchData.messages.length - 1];
+                    const lastMsg = lastConvo[lastConvo.length - 1];
+                    this.state.lastId = lastMsg.id;
+                }
+
                 await this.filterResponse();
 
-                // HANDLE SKIPPED/SYSTEM MESSAGES (Track Unique IDs)
                 if (this.state._skippedMessages.length > 0) {
                     this.state._skippedMessages.forEach(msg => this.state._systemMessageIds.add(msg.id));
-                    log.verb(`Found ${this.state._skippedMessages.length} status messages (Calls/Pins) - Skipping.`);
                 }
 
-                // FIX: EXPAND GRAND TOTAL DYNAMICALLY
                 const currentProcessed = this.state.delCount + this.state.failCount + this.state._systemMessageIds.size;
-                if (currentProcessed > this.state.grandTotal) {
-                    this.state.grandTotal = currentProcessed;
-                }
+                if (currentProcessed > this.state.grandTotal) this.state.grandTotal = currentProcessed;
 
-                // UPDATE UI NOW
                 if (this.onProgress) this.onProgress(this.state, this.stats);
 
-                // Add newly found messages to our buffer
                 const foundMessages = this.state._messagesToDelete;
                 if (foundMessages.length > 0) {
                     messageBuffer.push(...foundMessages);
@@ -838,52 +922,158 @@ var mainCss = (`
                     cleanSweepCount = 0;
                 }
 
-                // DECISION: Scan more? or Delete now?
-                const apiHasMore = this.state._seachResponse.messages.length > 0;
+                const apiHasMore = this.state._seachResponse && this.state._seachResponse.messages && this.state._seachResponse.messages.length > 0;
 
                 if (messageBuffer.length < BATCH_SIZE && apiHasMore) {
-                    // --- SCANNING MODE ---
                     this.printStats();
-                    this.state.offset += this.state._seachResponse.messages.length;
                     log.verb(`Buffering... Waiting ${SCAN_DELAY}ms to scan next page...`);
-                    await wait(SCAN_DELAY);
+                    await this.wait(SCAN_DELAY);
                     continue;
                 }
 
                 log.verb(
                     `Grand total: ${this.state.grandTotal}`,
                     `(Buffered for Delete: ${messageBuffer.length})`,
-                    `offset: ${this.state.offset}`
+                    `Current Cursor (ID): ${this.state.lastId}`
                 );
 
                 this.calcEtr();
-                log.verb(`Estimated time remaining: ${msToHMS(this.stats.etr)}`);
 
-                // --- DELETE MODE ---
                 if (messageBuffer.length > 0) {
-                    this.state._messagesToDelete = messageBuffer;
+                    let result = null;
 
-                    if (await this.confirm() === false) {
-                        this.state.running = false;
-                        break;
+                    if (this.options.mediaMode) {
+                        log.info(`Batch Ready: ${messageBuffer.length} items. Waiting for user input...`);
+                        result = await this.askUserAction(messageBuffer);
+
+                        if (result.action === 'STOP') {
+                            log.error("Mission Aborted!");
+                            this.state.running = false;
+                            this.state.stoppedByUser = true;
+                            break;
+                        }
+
+                        // Helper
+                        const doDownload = async (list) => {
+                            if (list.length > 0) {
+                                log.info(`Downloading ${list.length} selected items...`);
+                                for (const msg of list) {
+                                    if (!this.state.running) break;
+                                    if (msg.attachments.length > 0) {
+                                        for (const att of msg.attachments) {
+                                            try {
+                                                await this.downloadAttachment(att, msg.author.username);
+                                                log.success(`Saved: ${att.filename}`);
+                                            } catch (e) {
+                                                log.error(`Download failed: ${att.filename}`);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        };
+
+                        // 1. SKIP
+                        if (result.action === 'SKIP') {
+                            log.info("Action: SKIP Batch (Keeping all).");
+                            messageBuffer = [];
+                        }
+
+                        // 2. KEEP SELECTED (Delete Unselected)
+                        else if (result.action === 'KEEP_SELECTED') {
+                            log.info("Action: KEEP SELECTED (Delete Others).");
+                            // We delete unselected.
+                            // Buffer becomes Unselected.
+                            const unselected = messageBuffer.filter(m => !result.downloadIds.has(m.id));
+                            messageBuffer = unselected;
+                        }
+
+                        // 3. BACKUP & KEEP SELECTED (Delete Unselected)
+                        else if (result.action === 'BACKUP_KEEP_SELECTED') {
+                            log.info("Action: BACKUP & KEEP SELECTED (Delete Others).");
+                            const selected = messageBuffer.filter(m => result.downloadIds.has(m.id));
+                            await doDownload(selected);
+                            // Delete Unselected
+                            messageBuffer = messageBuffer.filter(m => !result.downloadIds.has(m.id));
+                        }
+
+                        // 4. BACKUP SELECTED & KEEP ALL
+                        else if (result.action === 'BACKUP_SELECT_KEEP_ALL') {
+                            log.info("Action: BACKUP SELECTED & KEEP ALL.");
+                            const selected = messageBuffer.filter(m => result.downloadIds.has(m.id));
+                            await doDownload(selected);
+                            messageBuffer = [];
+                        }
+
+                        // 5. BACKUP ALL & KEEP ALL
+                        else if (result.action === 'BACKUP_ALL_KEEP_ALL') {
+                            log.info("Action: BACKUP ALL & KEEP ALL.");
+                            await doDownload(messageBuffer);
+                            messageBuffer = [];
+                        }
+
+                        // 6. DELETE ALL
+                        else if (result.action === 'DELETE_ALL') {
+                            log.info("Action: DELETE ALL.");
+                            // Buffer remains full
+                        }
+
+                        // 7. DELETE SELECTED
+                        else if (result.action === 'DELETE_SELECTED') {
+                            log.info("Action: DELETE SELECTED (Keep Others).");
+                            messageBuffer = messageBuffer.filter(m => result.downloadIds.has(m.id));
+                        }
+
+                        // 8. BACKUP & DELETE SELECTED (New requested one)
+                        else if (result.action === 'BACKUP_DELETE_SELECTED') {
+                            log.info("Action: BACKUP & DELETE SELECTED (Keep Others).");
+                            const selected = messageBuffer.filter(m => result.downloadIds.has(m.id));
+                            await doDownload(selected);
+                            messageBuffer = selected;
+                        }
+
+                        // 9. BACKUP SELECTED & DELETE ALL
+                        else if (result.action === 'BACKUP_SELECT_DELETE_ALL') {
+                            log.info("Action: BACKUP SELECTED & DELETE ALL.");
+                            const selected = messageBuffer.filter(m => result.downloadIds.has(m.id));
+                            await doDownload(selected);
+                            // Delete everything
+                        }
+
+                        // 10. BACKUP ALL & DELETE ALL
+                        else if (result.action === 'BACKUP_ALL_DELETE_ALL') {
+                            log.info("Action: BACKUP ALL & DELETE ALL.");
+                            await doDownload(messageBuffer);
+                            // Delete everything
+                        }
                     }
 
-                    await this.deleteMessagesFromList();
+                    if (messageBuffer.length > 0) {
+                        this.state._messagesToDelete = messageBuffer;
 
-                    // Reset
-                    messageBuffer = [];
-                    this.state.offset = 0;
+                        if (!this.options.mediaMode && await this.confirm() === false) {
+                            this.state.running = false;
+                            this.state.stoppedByUser = true; // MARK USER STOP
+                            break;
+                        }
+
+                        await this.deleteMessagesFromList();
+
+                        if (!this.options.mediaMode) {
+                            this.state.offset = 0;
+                        } else {
+                            if (messageBuffer.length > 0 && result && result.action === 'DELETE_ALL') {
+                                this.state.offset = 0;
+                            }
+                        }
+                        messageBuffer = [];
+                    }
                 } else if (apiHasMore) {
-                    // Found nothing deletable, crawling forward
-                    this.state.offset += this.state._seachResponse.messages.length;
                     log.verb('Nothing to delete in current buffer, checking deeper...');
                 } else {
-                    // API returned empty.
-                    const totalInIndex = this.state._seachResponse.total_results || 0;
-
+                    const totalInIndex = (this.state._seachResponse && this.state._seachResponse.total_results) ? this.state._seachResponse.total_results : 0;
                     if (totalInIndex > 0 && cleanSweepCount < 2) {
-                        log.warn(`API says ${totalInIndex} messages remain, but returned 0. Discord Indexing lag? Retrying...`);
-                        this.state.offset = 0;
+                        log.warn(`API says ${totalInIndex} messages remain, but returned 0. Retrying...`);
                         cleanSweepCount++;
                         cooldownOverride = null;
                     } else if (cleanSweepCount >= 2) {
@@ -891,244 +1081,335 @@ var mainCss = (`
                         this.state.running = false;
                         break;
                     } else {
-                        log.info('End of results reached. Resetting offset to 0 to double-check...');
-                        this.state.offset = 0;
-                        cleanSweepCount++;
-                        cooldownOverride = 3000;
+                        log.info('End of results reached.');
+                        this.state.running = false;
+                        break;
                     }
                 }
 
-                // wait before next page
                 const finalWait = cooldownOverride !== null ? cooldownOverride : this.options.searchDelay;
-                log.verb(`Cooling down... Waiting ${(finalWait / 1000).toFixed(2)}s...`);
-                await wait(finalWait);
+                await this.wait(finalWait);
 
             } while (this.state.running);
 
             this.stats.endTime = new Date();
-            log.success(`Ended at ${this.stats.endTime.toLocaleString()}! Total time: ${msToHMS(this.stats.endTime.getTime() - this.stats.startTime.getTime())}`);
+            log.success(`Ended at ${this.stats.endTime.toLocaleString()}!`);
             this.printStats();
 
-            log.debug(`Deleted ${this.state.delCount} messages, ${this.state.failCount} failed.`);
-
-            const uniqueSystemCount = this.state._systemMessageIds.size;
-            if (uniqueSystemCount > 0) {
-                log.info(`${uniqueSystemCount} status messages (Calls/Pins) were found and ignored.`);
-            }
-
-            // FINAL HEADER UPDATE
-            const statusEl = document.getElementById('status');
-            if (statusEl) {
-                statusEl.innerText = `Done. Deleted ${this.state.delCount} msgs.`;
-                statusEl.classList.add('active'); // Keep it blue
-            }
-
-            // AUTO SAVE END OF SESSION
-            // Save if the explicit Auto Save is on, OR if Auto Log (hourly) is on
             if (this.options.autoSave || this.options.autoLog) {
-                log.info('Auto-saving log (Session Ended)...');
-                const messagesOnly = this.options.autoSave ? this.options.saveMessagesOnlySave : this.options.saveMessagesOnlyLog;
-                saveLog(messagesOnly);
+                log.info('Auto-saving log...');
+                saveLog(this.options.autoSave ? this.options.saveMessagesOnlySave : this.options.saveMessagesOnlyLog);
             }
-
             if (this.onStop) this.onStop(this.state, this.stats);
         }
 
-        stop() {
-            this.state.running = false;
-            if (this.onStop) this.onStop(this.state, this.stats);
-        }
+        askUserAction(messages) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('undiscord-modal');
+                const gallery = document.getElementById('media-gallery');
+                const footer = modal.querySelector('.modal-footer');
 
-        /** Calculate the estimated time remaining based on the current stats */
-        calcEtr() {
-            // 1. How many items left?
-            const remainingItems = this.state.grandTotal - this.state.delCount;
-            // 2. How many batches of 50 is that?
-            const batchesLeft = Math.ceil(remainingItems / 50);
-            // 3. Time per batch = (50 items * deleteDelay) + Search Delay + (Scan Buffer Delay * 2 approx)
-            const timePerBatch = (50 * this.options.deleteDelay) + this.options.searchDelay + 6000;
-            this.stats.etr = batchesLeft * timePerBatch;
-        }
+                // Clear & Rebuild Footer
+                footer.innerHTML = '';
 
-        /** Ask for confirmation in the beggining process */
-        async confirm() {
-            if (!this.options.askForConfirmation) return true;
+                // Helper to create buttons
+                const createBtn = (id, text, className = 'neon-btn') => {
+                    const btn = document.createElement('button');
+                    btn.id = id;
+                    btn.className = className;
+                    btn.innerText = text;
+                    footer.appendChild(btn);
+                    return btn;
+                };
 
-            log.verb('Waiting for your confirmation...');
-            const preview = this.state._messagesToDelete.map(m => `${m.author.username}#${m.author.discriminator}: ${m.attachments.length ? '[ATTACHMENTS]' : m.content}`).join('\n');
+                // --- ROW 1 (Yellows) ---
+                const btnSelectAll = createBtn('btnSelectAll', 'Select All');
+                const btnKeepSelected = createBtn('btnKeepSelected', 'Keep Selected');
+                const btnBackupKeepSelected = createBtn('btnBackupKeepSelected', 'Backup & Keep Selected');
+                const btnBackupSelectKeep = createBtn('btnBackupSelectKeep', 'Backup Selected & Keep ALL');
+                const btnBackupAllKeepAll = createBtn('btnBackupAllKeepAll', 'Backup & Keep ALL');
+                const btnSkip = createBtn('btnSkipBatch', 'Skip Batch');
 
-            const answer = await ask(
-                `Do you want to delete ~${this.state.grandTotal} messages? (Estimated time: ${msToHMS(this.stats.etr)})` +
-                '(The actual number of messages may be less, depending if you\'re using filters to skip some messages)' +
-                '\n\n---- Preview ----\n' +
-                preview
-            );
+                // --- ROW 2 (Reds) ---
+                const btnDeleteAll = createBtn('btnDeleteAll', 'Delete ALL', 'neon-btn neon-danger');
+                const btnDeleteSelected = createBtn('btnDeleteSelected', 'Delete Selected', 'neon-btn neon-danger');
+                const btnBackupDeleteSelected = createBtn('btnBackupDeleteSelected', 'Backup & Delete Selected', 'neon-btn neon-danger');
+                const btnBackupSelectDelete = createBtn('btnBackupSelectDelete', 'Backup Selected & Delete ALL', 'neon-btn neon-danger');
+                const btnBackupAllDeleteAll = createBtn('btnBackupAllDeleteAll', 'Backup & Delete ALL', 'neon-btn neon-danger');
+                const btnStop = createBtn('btnStop', 'ABORT', 'neon-btn neon-danger');
 
-            if (!answer) {
-                log.error('Aborted by you!');
-                return false;
-            } else {
-                log.verb('OK');
-                this.options.askForConfirmation = false; // do not ask for confirmation again on the next request
-                return true;
-            }
+                // RENDER GALLERY
+                gallery.innerHTML = '';
+                const downloadSet = new Set();
+
+                messages.forEach(msg => {
+                    let src = msg.attachments.length ? msg.attachments[0].url : (msg.embeds[0]?.thumbnail?.url || null);
+                    let ext = "FILE";
+                    let isVideo = false;
+                    let filename = "";
+
+                    if (msg.attachments.length > 0) {
+                        filename = msg.attachments[0].filename;
+                        const dotIndex = filename.lastIndexOf('.');
+                        if (dotIndex !== -1) ext = filename.substring(dotIndex + 1).toUpperCase();
+                        if (['MP4', 'MOV', 'WEBM', 'AVI', 'MKV'].includes(ext)) isVideo = true;
+                    } else if (src) {
+                        if (src.includes('.mp4') || src.includes('.webm') || src.includes('.mov')) {
+                            ext = "VIDEO";
+                            isVideo = true;
+                        } else ext = "IMAGE";
+                    }
+
+                    if (!src) src = "https://via.placeholder.com/150?text=No+Preview";
+                    const jumpLink = `https://discord.com/channels/${this.options.guildId}/${this.options.channelId}/${msg.id}`;
+
+                    const card = document.createElement('div');
+                    card.className = 'media-card';
+
+                    let mediaHtml = `<img src="${src}" loading="lazy">`;
+                    if (isVideo) {
+                        mediaHtml = `<video src="${src}" loop muted onmouseover="this.play()" onmouseout="this.pause()" preload="metadata"></video>`;
+                    }
+
+                    let overlayHtml = '';
+                    if (!isVideo && ext !== 'IMAGE' && ext !== 'PNG' && ext !== 'JPG' && ext !== 'JPEG' && ext !== 'GIF' && ext !== 'WEBP') {
+                        overlayHtml = `<div class="file-name">${filename || ext}</div>`;
+                    }
+
+                    card.innerHTML = `
+                        <span class="file-badge">${ext}</span>
+                        <a href="${jumpLink}" target="_blank" class="jump-btn" title="Jump to Message" onclick="event.stopPropagation();">🔗</a>
+                        ${overlayHtml}
+                        ${mediaHtml}
+                        <div class="media-info">${new Date(msg.timestamp).toLocaleDateString()}</div>
+                    `;
+
+                    card.onclick = () => {
+                        if (downloadSet.has(msg.id)) {
+                            downloadSet.delete(msg.id);
+                            card.classList.remove('selected');
+                        } else {
+                            downloadSet.add(msg.id);
+                            card.classList.add('selected');
+                        }
+                    };
+                    gallery.appendChild(card);
+                });
+
+                modal.style.display = 'flex';
+
+                const close = (action) => {
+                    modal.style.display = 'none';
+                    resolve({
+                        action,
+                        downloadIds: downloadSet
+                    });
+                };
+
+                // WIRE EVENTS
+                btnStop.onclick = () => close('STOP');
+                btnSkip.onclick = () => close('SKIP');
+                btnKeepSelected.onclick = () => close('KEEP_SELECTED');
+                btnDeleteAll.onclick = () => close('DELETE_ALL');
+                btnDeleteSelected.onclick = () => close('DELETE_SELECTED');
+                btnBackupKeepSelected.onclick = () => close('BACKUP_KEEP_SELECTED');
+                btnBackupDeleteSelected.onclick = () => close('BACKUP_DELETE_SELECTED');
+                btnBackupSelectKeep.onclick = () => close('BACKUP_SELECT_KEEP');
+                btnBackupSelectDelete.onclick = () => close('BACKUP_SELECT_DELETE_ALL');
+                btnBackupAllKeepAll.onclick = () => close('BACKUP_ALL_KEEP_ALL');
+                btnBackupAllDeleteAll.onclick = () => close('BACKUP_ALL_DELETE_ALL');
+                btnSelectAll.onclick = () => {
+                    const cards = gallery.querySelectorAll('.media-card');
+                    const allSelected = downloadSet.size === messages.length;
+                    cards.forEach((c, index) => {
+                        const id = messages[index].id;
+                        if (allSelected) {
+                            c.classList.remove('selected');
+                            downloadSet.delete(id);
+                        } else {
+                            c.classList.add('selected');
+                            downloadSet.add(id);
+                        }
+                    });
+                };
+            });
         }
 
         async search() {
             let API_SEARCH_URL;
-            if (this.options.guildId === '@me') API_SEARCH_URL = `https://discord.com/api/v9/channels/${this.options.channelId}/messages/`; // DMs
-            else API_SEARCH_URL = `https://discord.com/api/v9/guilds/${this.options.guildId}/messages/`; // Server
+            if (this.options.guildId === '@me') API_SEARCH_URL = `https://discord.com/api/v9/channels/${this.options.channelId}/messages/`;
+            else API_SEARCH_URL = `https://discord.com/api/v9/guilds/${this.options.guildId}/messages/`;
 
             let resp;
             try {
                 this.beforeRequest();
+                const strictMedia = (this.options.mediaMode && this.options.mediaModeType === 'media_only');
+                const hasFile = strictMedia ? true : this.options.hasFile;
+                const content = strictMedia ? null : this.options.content;
+
+                // ID-BASED PAGINATION
+                const maxIdParam = this.state.lastId || (this.options.maxId ? toSnowflake(this.options.maxId) : undefined);
+
                 resp = await fetch(API_SEARCH_URL + 'search?' + queryString([
                     ['author_id', this.options.authorId || undefined],
                     ['channel_id', (this.options.guildId !== '@me' ? this.options.channelId : undefined) || undefined],
                     ['min_id', this.options.minId ? toSnowflake(this.options.minId) : undefined],
-                    ['max_id', this.options.maxId ? toSnowflake(this.options.maxId) : undefined],
+                    ['max_id', maxIdParam],
                     ['sort_by', 'timestamp'],
                     ['sort_order', 'desc'],
-                    ['offset', this.state.offset],
+                    ['offset', 0],
                     ['has', this.options.hasLink ? 'link' : undefined],
-                    ['has', this.options.hasFile ? 'file' : undefined],
-                    ['content', this.options.content || undefined],
+                    ['has', hasFile ? 'file' : undefined],
+                    ['content', content || undefined],
                     ['include_nsfw', this.options.includeNsfw ? true : undefined],
                 ]), {
                     headers: {
-                        'Authorization': this.options.authToken,
+                        'Authorization': this.options.authToken
                     }
                 });
                 this.afterRequest();
             } catch (err) {
                 this.state.running = false;
-                log.error('Search request threw an error:', err);
                 throw err;
             }
 
-            // not indexed yet
             if (resp.status === 202) {
-                let w = (await resp.json()).retry_after * 1000;
-                w = w || this.options.searchDelay; // Fix retry_after 0
-                this.stats.throttledCount++;
-                this.stats.throttledTotalTime += w;
-                log.warn(`This channel isn't indexed yet. Waiting ${w}ms for discord to index it...`);
-                await wait(w);
+                await this.wait(this.options.searchDelay);
                 return await this.search();
             }
-
             if (!resp.ok) {
-                // searching messages too fast
+                // --- 403 / 401 ERROR HANDLING ---
+                if (resp.status === 403 || resp.status === 401) {
+                    log.warn(`Access Denied (${resp.status}). Skipping Channel.`);
+                    // Return fake empty response to skip this channel gracefully
+                    const data = {
+                        messages: [],
+                        total_results: 0
+                    };
+                    this.state._seachResponse = data;
+                    return data;
+                }
+
                 if (resp.status === 429) {
-                    let w = (await resp.json()).retry_after * 1000;
-                    w = w || this.options.searchDelay; // Fix retry_after 0
-
-                    this.stats.throttledCount++;
-                    this.stats.throttledTotalTime += w;
-
-                    // FIX: Ensure we are modifying the options, not the non-existent stats. -Aerial
-                    if (w > this.options.searchDelay) {
-                        this.options.searchDelay = w;
-                        log.limited(`Being rate limited by the API for ${w}ms! Increasing search delay...`);
-                    } else {
-                        log.limited(`Being rate limited by the API for ${w}ms! Keeping current search delay.`);
-                    }
-
-                    this.printStats();
-                    log.verb(`Cooling down for ${w * 2}ms before retrying...`);
-
-                    await wait(w * 2);
+                    const w = (await resp.json()).retry_after * 1000;
+                    await this.wait(w * 2);
                     return await this.search();
                 } else {
                     this.state.running = false;
-                    log.error(`Error searching messages, API responded with status ${resp.status}!\n`, await resp.json());
                     throw resp;
                 }
             }
             const data = await resp.json();
             this.state._seachResponse = data;
-            console.log(PREFIX, 'search', data);
             return data;
         }
 
         async filterResponse() {
             const data = this.state._seachResponse;
-
-            // the search total will decrease as we delete stuff
             const total = data.total_results;
             if (total > this.state.grandTotal) this.state.grandTotal = total;
-
-            // search returns messages near the the actual message, only get the messages we searched for.
             const discoveredMessages = data.messages.map(convo => convo.find(message => message.hit === true));
 
-            // we can only delete some types of messages, system messages are not deletable. -ayubun
             let messagesToDelete = discoveredMessages;
-
-            messagesToDelete = messagesToDelete.filter(msg =>
-                msg.type === 0 || // Standard Text Message
-                msg.type === 46 || // Polls
-                (msg.type >= 6 && msg.type <= 19) // Systems, Pins, Replies (Excludes 20/21)
-            );
-
+            messagesToDelete = messagesToDelete.filter(msg => msg.type === 0 || msg.type === 46 || (msg.type >= 6 && msg.type <= 19));
             messagesToDelete = messagesToDelete.filter(msg => msg.pinned ? this.options.includePinned : true);
 
-            // custom filter of messages
+            if (this.options.skipLink || this.options.skipFile || this.options.skipPinned) {
+                messagesToDelete = messagesToDelete.filter(msg => {
+                    if (this.options.skipPinned && msg.pinned) return false;
+                    if (this.options.skipLink && /https?:\/\//i.test(msg.content)) return false;
+                    if (this.options.skipFile && msg.attachments.length > 0) return false;
+                    return true;
+                });
+            }
+
+            if (this.options.mediaMode && this.options.mediaModeType === 'media_only') {
+                messagesToDelete = messagesToDelete.filter(msg => msg.attachments.length > 0);
+            }
+
             try {
                 const regex = new RegExp(this.options.pattern, 'i');
                 messagesToDelete = messagesToDelete.filter(msg => regex.test(msg.content));
-            } catch (e) {
-                log.warn('Ignoring RegExp because pattern is malformed!', e);
-            }
+            } catch (e) {}
 
-            // create an array containing everything we skipped. (used to calculate offset for next searches)
             const skippedMessages = discoveredMessages.filter(msg => !messagesToDelete.find(m => m.id === msg.id));
-
             this.state._messagesToDelete = messagesToDelete;
             this.state._skippedMessages = skippedMessages;
-
-            console.log(PREFIX, 'filterResponse', this.state);
         }
 
         async deleteMessagesFromList() {
             for (let i = 0; i < this.state._messagesToDelete.length; i++) {
-                const message = this.state._messagesToDelete[i];
                 if (!this.state.running) return log.error('Stopped by you!');
+                const message = this.state._messagesToDelete[i];
 
-                // FIX: DYNAMIC GRAND TOTAL (Delete Phase)
                 const currentProgress = this.state.delCount + 1;
-                if (currentProgress > this.state.grandTotal) {
-                    this.state.grandTotal = currentProgress;
+                if (currentProgress > this.state.grandTotal) this.state.grandTotal = currentProgress;
+
+                let thumbHtml = '';
+                if (message.attachments.length > 0) {
+                    thumbHtml = '<br>';
+                    message.attachments.forEach(att => {
+                        if (att.content_type && att.content_type.startsWith('image/')) {
+                            thumbHtml += `<img src="${att.url}" style="max-height: 64px; max-width: 64px; border-radius: 4px; margin: 2px; vertical-align: middle;">`;
+                        } else {
+                            thumbHtml += `[FILE: ${att.filename}] `;
+                        }
+                    });
                 }
 
-                // RANDOM JITTER: Add 0-30% extra delay
-                const jitter = Math.floor(Math.random() * (this.options.deleteDelay * 0.3));
-                const totalWait = this.options.deleteDelay + jitter;
+                let logPrefix = `[${currentProgress}/${this.state.grandTotal}] `;
+                if (this.options.saveMessagesOnlyLog) logPrefix = '';
 
                 log.debug(
-                    `[${currentProgress}/${this.state.grandTotal}] ` +
+                    `${logPrefix}` +
                     `<sup>${new Date(message.timestamp).toLocaleString()}</sup> ` +
                     `<b>${redact(message.author.username + '#' + message.author.discriminator)}</b>` +
                     `: <i>${redact(message.content).replace(/\n/g, '↵')}</i>` +
-                    (message.attachments.length ? redact(JSON.stringify(message.attachments)) : '')
+                    thumbHtml
                 );
 
-                // Delete a single message (with retry)
                 let attempt = 0;
                 while (attempt < this.options.maxAttempt) {
                     const result = await this.deleteMessage(message);
-
                     if (result === 'RETRY') {
                         attempt++;
-                        log.verb(`Retrying in ${this.options.deleteDelay}ms... (${attempt}/${this.options.maxAttempt})`);
-                        await wait(this.options.deleteDelay);
+                        await this.wait(this.options.deleteDelay);
                     } else break;
                 }
 
                 this.calcEtr();
                 if (this.onProgress) this.onProgress(this.state, this.stats);
 
-                await wait(totalWait);
+                await this.wait(this.options.mediaMode ? 200 : this.options.deleteDelay);
             }
+        }
+
+        downloadAttachment(attachment, username) {
+            return new Promise((resolve, reject) => {
+                if (typeof GM_download === 'undefined') {
+                    const a = document.createElement('a');
+                    a.href = attachment.url;
+                    a.download = attachment.filename;
+                    a.target = '_blank';
+                    a.click();
+                    setTimeout(resolve, 500);
+                    return;
+                }
+                const safeFilename = attachment.filename.replace(/[<>:"/\\|?*]/g, '_');
+                const safeUser = username.replace(/[<>:"/\\|?*]/g, '_');
+                const safeServer = (this.options.serverName || "Unknown Server").replace(/[<>:"/\\|?*]/g, '_');
+                const safeChannel = (this.options.channelName || "Unknown Channel").replace(/[<>:"/\\|?*]/g, '_');
+                const path = `Undiscord_Media/${safeUser}/${safeServer}/${safeChannel}/${safeFilename}`;
+
+                GM_download({
+                    url: attachment.url,
+                    name: path,
+                    saveAs: false,
+                    onload: () => resolve(),
+                    onerror: (err) => reject(err),
+                    timeout: 15000
+                });
+            });
         }
 
         async deleteMessage(message) {
@@ -1139,78 +1420,53 @@ var mainCss = (`
                 resp = await fetch(API_DELETE_URL, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': this.options.authToken,
+                        'Authorization': this.options.authToken
                     },
                 });
                 this.afterRequest();
             } catch (err) {
-                // no response error (e.g. network error)
-                log.error('Delete request throwed an error:', err);
-                log.verb('Related object:', redact(JSON.stringify(message)));
-                this.state.failCount++;
                 return 'FAILED';
             }
 
             if (!resp.ok) {
-                if (resp.status === 429) {
-                    // deleting messages too fast
-                    const w = (await resp.json()).retry_after * 1224; // 1000
-                    this.stats.throttledCount++;
-                    this.stats.throttledTotalTime += w;
-
-                    // FIX: Only increase delay, never decrease it to prevent speeding up
-                    if (w > this.options.deleteDelay) {
-                        this.options.deleteDelay = w; // increase delay
-                        log.limited(`Being rate limited by the API for ${w}ms! Adjusted delete delay to ${this.options.deleteDelay}ms.`);
-                    } else {
-                        log.limited(`Being rate limited by the API for ${w}ms! Keeping current delay of ${this.options.deleteDelay}ms.`);
-                    }
-
-                    this.printStats();
-                    log.verb(`Cooling down for ${w * 2}ms before retrying...`);
-                    await wait(w * 2);
-                    return 'RETRY';
-                } else {
-                    const body = await resp.text();
-
-                    try {
-                        const r = JSON.parse(body);
-
-                        if (resp.status === 400 && r.code === 50083) {
-                            // 400 can happen if the thread is archived (code=50083)
-                            log.warn('Error deleting message (Thread is archived). Will increment offset so we don\'t search this in the next page...');
-                            this.state.offset++;
-                            this.state.failCount++;
-                            return 'FAIL_SKIP'; // Failed but we will skip it next time
-                        }
-
-                        // FIX: Treat 404 as success (it's already gone)
-                        if (resp.status === 404) {
-                            this.state.delCount++;
-                            return 'OK';
-                        }
-
-                        log.error(`Error deleting message, API responded with status ${resp.status}!`, r);
-                        log.verb('Related object:', redact(JSON.stringify(message)));
-                        this.state.failCount++;
-                        return 'FAILED';
-                    } catch (e) {
-                        log.error(`Fail to parse JSON. API responded with status ${resp.status}!`, body);
-                    }
+                if (resp.status === 401) {
+                    log.error(`401 Unauthorized! Message: ${message.id}`);
+                    return 'FAILED';
                 }
+                if (resp.status === 429) {
+                    const w = (await resp.json()).retry_after * 1000;
+                    await this.wait(w);
+                    return 'RETRY';
+                }
+                if (resp.status === 404) return 'OK';
             }
-
             this.state.delCount++;
             return 'OK';
         }
 
-        #beforeTs = 0; // used to calculate latency
+        confirm() {
+            if (!this.options.askForConfirmation) return true;
+            return ask(`Delete ${this.state.grandTotal} messages?`);
+        }
+
+        #beforeTs = 0;
         beforeRequest() {
             this.#beforeTs = Date.now();
         }
         afterRequest() {
             this.stats.lastPing = (Date.now() - this.#beforeTs);
             this.stats.avgPing = this.stats.avgPing > 0 ? (this.stats.avgPing * 0.9) + (this.stats.lastPing * 0.1) : this.stats.lastPing;
+        }
+        stop() {
+            this.state.running = false;
+            if (this.onStop) this.onStop(this.state, this.stats);
+        }
+
+        calcEtr() {
+            const remainingItems = this.state.grandTotal - this.state.delCount;
+            const batchesLeft = Math.ceil(remainingItems / 50);
+            const timePerBatch = (50 * this.options.deleteDelay) + this.options.searchDelay + 6000;
+            this.stats.etr = batchesLeft * timePerBatch;
         }
 
         printStats() {
@@ -1546,7 +1802,7 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
                 if (auxiliary) document.body.classList.add(auxiliary);
 
                 function clickHandler(e) {
-                    const message = e.target.closest('[id^="message-content-"]');
+                    const message = e.target.closest('[data-list-item-id^="chat-messages-"]') || e.target.closest('[id^="message-content-"]');
                     if (message) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1593,13 +1849,43 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
     function getGuildId() {
         const m = location.href.match(/channels\/([\w@]+)\/(\d+)/);
         if (m) return m[1];
-        else alert('Could not find the Guild ID!\nPlease make sure you are on a Server or DM.');
+
+        // Webpack fallback
+        const webpackModules = window.webpackChunkdiscord_app?.push?.[
+            [Symbol()]
+        ]?.c;
+        if (webpackModules) {
+            const channelStore = webpackModules.find(m => m?.exports?.getChannel);
+            if (channelStore?.exports) {
+                const channelIdMatch = location.pathname.match(/channels\/\d+\/(\d+)/);
+                if (channelIdMatch) {
+                    const currentChannel = channelStore.exports.getChannel(channelIdMatch[1]);
+                    return currentChannel?.getGuildId() || '@me';
+                }
+            }
+        }
+        alert('Could not find the Guild ID!\nPlease make sure you are on a Server or DM.');
     }
 
     function getChannelId() {
         const m = location.href.match(/channels\/([\w@]+)\/(\d+)/);
         if (m) return m[2];
-        else alert('Could not find the Channel ID!\nPlease make sure you are on a Channel or DM.');
+
+        // Webpack fallback
+        const webpackModules = window.webpackChunkdiscord_app?.push?.[
+            [Symbol()]
+        ]?.c;
+        if (webpackModules) {
+            const channelStore = webpackModules.find(m => m?.exports?.getChannel);
+            if (channelStore?.exports) {
+                const channelIdMatch = location.pathname.match(/channels\/\d+\/(\d+)/);
+                if (channelIdMatch) {
+                    const currentChannel = channelStore.exports.getChannel(channelIdMatch[1]);
+                    return currentChannel?.id || null; // Return the channel's ID directly
+                }
+            }
+        }
+        alert('Could not find the Channel ID!\nPlease make sure you are on a Channel or DM.');
     }
 
     function fillToken() {
@@ -1617,7 +1903,7 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
     // -------------------------- User interface ------------------------------- //
 
     // links
-    const HOME = 'https://github.com/victornpb/undiscord';
+    const HOME = 'https://github.com/AerialJustice/undiscord-fixed-2025';
     const WIKI = 'https://github.com/victornpb/undiscord/wiki';
 
     const undiscordCore = new UndiscordCore();
@@ -1641,6 +1927,7 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
         insertCss(mainCss);
         insertCss(dragCss);
 
+        // 1. Create and Append Main Window FIRST
         const undiscordUI = replaceInterpolations(undiscordTemplate, {
             VERSION,
             HOME,
@@ -1649,30 +1936,43 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
         ui.undiscordWindow = createElm(undiscordUI);
         document.body.appendChild(ui.undiscordWindow);
 
-        // enable drag and resize on undiscord window
+        // 2. Create and Append main button
+        ui.undiscordBtn = createElm(buttonHtml);
+        ui.undiscordBtn.onclick = toggleWindow;
+
+        // 3. Move Modal (now correctly referenced via document.getElementById)
+        const modal = document.getElementById('undiscord-modal');
+        if (modal) {
+            document.body.appendChild(modal);
+        }
+
+        // 4. CACHE ELEMENTS AFTER THEY ARE IN THE DOM
+        ui.logArea = $('#logArea');
+        ui.autoScroll = $('#autoScroll');
+        ui.progressMain = $('#progressBar'); // From undiscordWindow
+        ui.percent = $('#progressPercent'); // From undiscordWindow
+        ui.progressIcon = ui.undiscordBtn.querySelector('progress'); // NOW ui.undiscordBtn exists!
+
+        // ENABLE LOGGING IMMEDIATELY (To catch any subsequent errors)
+        setLogFn(printLog);
+
+        // Drag Handler
         new DragResize({
             elm: ui.undiscordWindow,
             moveHandle: $('.header')
         });
 
-        // create undiscord Trash icon
-        ui.undiscordBtn = createElm(buttonHtml);
-        ui.undiscordBtn.onclick = toggleWindow;
-
-        function mountBtn() { // BenjaminBoho
+        function mountBtn() {
             let toolbar = document.querySelector('[class*="toolbar"]') ||
                 document.querySelector('[role="toolbar"]') ||
-                document.querySelector('[class*="header"] [role="navigation"]');
-
-            if (!toolbar) return;
-
-            if (!toolbar.contains(ui.undiscordBtn)) {
+                document.querySelector('[class*="header"] [role="navigation"]') ||
+                document.querySelector('[data-list-id="app-mount"] > div > div');
+            if (toolbar && !toolbar.contains(ui.undiscordBtn)) {
                 toolbar.insertBefore(ui.undiscordBtn, toolbar.firstChild);
             }
         }
         mountBtn();
 
-        // watch for changes and re-mount button if necessary
         const discordElm = document.body;
         let observerThrottle = null;
         const observer = new MutationObserver((_mutationsList, _observer) => {
@@ -1680,7 +1980,7 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
             observerThrottle = setTimeout(() => {
                 observerThrottle = null;
                 if (!document.body.contains(ui.undiscordBtn)) mountBtn();
-            }, 3000);
+            }, 1000);
         });
         observer.observe(discordElm, {
             attributes: false,
@@ -1691,158 +1991,184 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
         function toggleWindow() {
             if (ui.undiscordWindow.style.display !== 'none') {
                 ui.undiscordWindow.style.display = 'none';
-                // CLOSE STATE -> GREEN (#23a559)
                 ui.undiscordBtn.style.color = '#23a559';
             } else {
                 ui.undiscordWindow.style.display = '';
-                // OPEN STATE -> ORANGE (#faa61a)
                 ui.undiscordBtn.style.color = '#faa61a';
             }
         }
 
-        // cached elements
-        ui.logArea = $('#logArea');
-        ui.autoScroll = $('#autoScroll');
-        ui.progressMain = $('#progressBar');
-        ui.progressIcon = ui.undiscordBtn.querySelector('progress');
-        ui.percent = $('#progressPercent');
+        // Event Listeners (With Braces and null checks)
+        const btnHide = $('#hide');
+        if (btnHide) {
+            btnHide.onclick = toggleWindow;
+        }
+        const btnMin = $('#btnMinimize');
+        if (btnMin) {
+            btnMin.onclick = () => {
+                ui.undiscordWindow.classList.toggle('minimized');
+            };
+        }
+        const btnSidebar = $('#toggleSidebar');
+        if (btnSidebar) {
+            btnSidebar.onclick = () => ui.undiscordWindow.classList.toggle('hide-sidebar');
+        }
+        const btnStart = $('button#start');
+        if (btnStart) {
+            btnStart.onclick = startAction;
+        }
+        const btnStop = $('button#stop');
+        if (btnStop) {
+            btnStop.onclick = stopAction;
+        }
+        const btnClear = $('button#clear');
+        if (btnClear) {
+            btnClear.onclick = () => {
+                ui.logArea.innerHTML = '';
+            };
+        }
+        const btnGetAuthor = $('button#getAuthor');
+        if (btnGetAuthor) {
+            btnGetAuthor.onclick = () => {
+                $('input#authorId').value = getAuthorId();
+            };
+        }
+        const btnGetGuild = $('button#getGuild');
+        if (btnGetGuild) {
+            btnGetGuild.onclick = () => {
+                const guildId = $('input#guildId').value = getGuildId();
+                if (guildId === '@me') $('input#channelId').value = getChannelId();
+            };
+        }
+        const btnGetChannel = $('button#getChannel');
+        if (btnGetChannel) {
+            btnGetChannel.onclick = () => {
+                $('input#channelId').value = getChannelId();
+                $('input#guildId').value = getGuildId();
+            };
+        }
+        const chkRedact = $('#redact');
+        if (chkRedact) {
+            chkRedact.onchange = () => {
+                const b = ui.undiscordWindow.classList.toggle('redact');
+                if (b) alert('This mode will attempt to hide personal information.\nAlways double check you are not sharing sensitive information!');
+            };
+        }
 
-        // register event listeners
-        $('#hide').onclick = toggleWindow;
+        const btnPickAfter = $('#pickMessageAfter');
+        if (btnPickAfter) {
+            btnPickAfter.onclick = async () => {
+                alert('Select a message on the chat.\nThe message below it will be deleted.');
+                toggleWindow();
+                const id = await messagePicker.grab('after');
+                if (id) $('input#minId').value = id;
+                toggleWindow();
+            };
+        }
+        const btnPickBefore = $('#pickMessageBefore');
+        if (btnPickBefore) {
+            btnPickBefore.onclick = async () => {
+                alert('Select a message on the chat.\nThe message above it will be deleted.');
+                toggleWindow();
+                const id = await messagePicker.grab('before');
+                if (id) $('input#maxId').value = id;
+                toggleWindow();
+            };
+        }
+        const btnGetToken = $('button#getToken');
+        if (btnGetToken) {
+            btnGetToken.onclick = () => {
+                $('input#token').value = fillToken();
+            };
+        }
+        const btnCopy = $('button#copy');
+        if (btnCopy) {
+            btnCopy.onclick = () => {
+                const logText = ui.logArea.innerText;
+                navigator.clipboard.writeText(logText);
+                const originalText = btnCopy.innerText;
+                btnCopy.innerText = 'Copied!';
+                setTimeout(() => {
+                    btnCopy.innerText = originalText;
+                }, 1500);
+            };
+        }
 
-        // MINIMIZE BUTTON
-        $('#btnMinimize').onclick = () => {
-            const win = ui.undiscordWindow;
-            win.classList.toggle('minimized');
-        };
-
-        $('#toggleSidebar').onclick = () => ui.undiscordWindow.classList.toggle('hide-sidebar');
-        $('button#start').onclick = startAction;
-        $('button#stop').onclick = stopAction;
-        $('button#clear').onclick = () => {
-            ui.logArea.innerHTML = '';
-        };
-        $('button#getAuthor').onclick = () => {
-            $('input#authorId').value = getAuthorId();
-        };
-        $('button#getGuild').onclick = () => {
-            const guildId = $('input#guildId').value = getGuildId();
-            if (guildId === '@me') $('input#channelId').value = getChannelId();
-        };
-        $('button#getChannel').onclick = () => {
-            $('input#channelId').value = getChannelId();
-            $('input#guildId').value = getGuildId();
-        };
-        $('#redact').onchange = () => {
-            const b = ui.undiscordWindow.classList.toggle('redact');
-            if (b) alert('This mode will attempt to hide personal information, so you can screen share / take screenshots.\nAlways double check you are not sharing sensitive information!');
-        };
-        $('#pickMessageAfter').onclick = async () => {
-            alert('Select a message on the chat.\nThe message below it will be deleted.');
-            toggleWindow();
-            const id = await messagePicker.grab('after');
-            if (id) $('input#minId').value = id;
-            toggleWindow();
-        };
-        $('#pickMessageBefore').onclick = async () => {
-            alert('Select a message on the chat.\nThe message above it will be deleted.');
-            toggleWindow();
-            const id = await messagePicker.grab('before');
-            if (id) $('input#maxId').value = id;
-            toggleWindow();
-        };
-        $('button#getToken').onclick = () => {
-            $('input#token').value = fillToken();
-        };
-
-        // COPY BUTTON LOGIC
-        $('button#copy').onclick = () => {
-            const logText = ui.logArea.innerText;
-            navigator.clipboard.writeText(logText);
-
-            // Visual feedback
-            const btn = $('button#copy');
-            const originalText = btn.innerText;
-            btn.innerText = 'Copied!';
-            setTimeout(() => {
-                btn.innerText = originalText;
-            }, 1500);
-        };
-
-        // AUTO LOG TOGGLE
-        $('#autoLog').onchange = (e) => {
-            undiscordCore.options.autoLog = e.target.checked;
-        };
-        // SAVE MESSAGES ONLY FOR AUTO LOG
-        $('#saveMessagesOnlyLog').onchange = (e) => {
-            undiscordCore.options.saveMessagesOnlyLog = e.target.checked;
-        };
-        // AUTO SAVE TOGGLE
-        $('#autoSave').onchange = (e) => {
-            undiscordCore.options.autoSave = e.target.checked;
-        };
-        // SAVE MESSAGES ONLY FOR AUTO SAVE
-        $('#saveMessagesOnlySave').onchange = (e) => {
-            undiscordCore.options.saveMessagesOnlySave = e.target.checked;
-        };
-        // AUTO CLEAR TOGGLE
-        $('#autoClear').onchange = (e) => {
-            undiscordCore.options.autoClear = e.target.checked;
-        };
-
-        // MANUAL CLEAR LOG BUTTON (In Logs section)
-        $('button#btnLogClear').onclick = () => {
-            ui.logArea.innerHTML = '';
-        };
-
-        // sync delays
-        $('input#searchDelay').onchange = (e) => {
-            const v = parseInt(e.target.value);
-            if (v) undiscordCore.options.searchDelay = v;
-        };
-        $('input#deleteDelay').onchange = (e) => {
-            const v = parseInt(e.target.value);
-            if (v) undiscordCore.options.deleteDelay = v;
-        };
-
-        $('input#searchDelay').addEventListener('input', (event) => {
-            $('div#searchDelayValue').textContent = event.target.value + ' ms';
-        });
-        $('input#deleteDelay').addEventListener('input', (event) => {
-            $('div#deleteDelayValue').textContent = event.target.value + ' ms';
-        });
-
-        // SET DEFAULT BADGE VALUES (New Code)
-        $('div#searchDelayValue').textContent = $('input#searchDelay').value + ' ms';
-        $('div#deleteDelayValue').textContent = $('input#deleteDelay').value + ' ms';
-
-        // import json
-        const fileSelection = $('input#importJsonInput');
-        fileSelection.onchange = async () => {
-            const files = fileSelection.files;
-            if (files.length === 0) return log.warn('No file selected.');
-            const channelIdField = $('input#channelId');
-            const guildIdField = $('input#guildId');
-            guildIdField.value = '@me';
-            $('input#authorId').value = getAuthorId();
-            try {
-                const file = files[0];
-                const text = await file.text();
-                const json = JSON.parse(text);
-                const channelIds = Object.keys(json);
-                channelIdField.value = channelIds.join(',');
-                log.info(`Loaded ${channelIds.length} channels.`);
-            } catch (err) {
-                log.error('Error parsing file!', err);
+        // Checkbox Listeners
+        const hookCheckbox = (id, opt) => {
+            const el = $(id);
+            if (el) {
+                el.onchange = (e) => {
+                    undiscordCore.options[opt] = e.target.checked;
+                };
             }
         };
+        hookCheckbox('#autoLog', 'autoLog');
+        hookCheckbox('#saveMessagesOnlyLog', 'saveMessagesOnlyLog');
+        hookCheckbox('#autoSave', 'autoSave');
+        hookCheckbox('#saveMessagesOnlySave', 'saveMessagesOnlySave');
+        hookCheckbox('#autoClear', 'autoClear');
 
-        // redirect console logs
-        setLogFn(printLog);
+        const btnLogClear = $('button#btnLogClear');
+        if (btnLogClear) {
+            btnLogClear.onclick = () => {
+                ui.logArea.innerHTML = '';
+            };
+        }
 
-        setupUndiscordCore();
+        // === DELAY SLIDERS ===
+        function updateDelays() {
+            const searchInput = $('input#searchDelay');
+            const deleteInput = $('input#deleteDelay');
+            const searchLabel = $('div#searchDelayValue');
+            const deleteLabel = $('div#deleteDelayValue');
 
-        // Force initial icon color
+            if (searchInput && searchLabel) {
+                searchLabel.textContent = searchInput.value + ' ms';
+                undiscordCore.options.searchDelay = parseInt(searchInput.value);
+            }
+            if (deleteInput && deleteLabel) {
+                deleteLabel.textContent = deleteInput.value + ' ms';
+                undiscordCore.options.deleteDelay = parseInt(deleteInput.value);
+            }
+        }
+
+        const sDelay = $('input#searchDelay');
+        if (sDelay) {
+            sDelay.addEventListener('input', updateDelays);
+            sDelay.addEventListener('change', updateDelays);
+        }
+        const dDelay = $('input#deleteDelay');
+        if (dDelay) {
+            dDelay.addEventListener('input', updateDelays);
+            dDelay.addEventListener('change', updateDelays);
+        }
+        updateDelays(); // Run once immediately to set initial values
+        // ==========================
+
+        const fileSelection = $('input#importJsonInput');
+        if (fileSelection) {
+            fileSelection.onchange = async () => {
+                const files = fileSelection.files;
+                if (files.length === 0) return log.warn('No file selected.');
+                const channelIdField = $('input#channelId');
+                const guildIdField = $('input#guildId');
+                guildIdField.value = '@me';
+                $('input#authorId').value = getAuthorId();
+                try {
+                    const file = files[0];
+                    const text = await file.text();
+                    const json = JSON.parse(text);
+                    const channelIds = Object.keys(json);
+                    channelIdField.value = channelIds.join(',');
+                    log.info(`Loaded ${channelIds.length} channels.`);
+                } catch (err) {
+                    log.error('Error parsing file!', err);
+                }
+            };
+        }
+
+        setupUndiscordCore(); // This function now runs AFTER all ui elements are cached
         ui.undiscordBtn.style.color = '#23a559';
     }
 
@@ -1870,50 +2196,59 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
             const value = state.delCount + state.failCount + systemCount;
             max = Math.max(max, value, 0);
 
-            // CALC STATS
             const percent = value >= 0 && max ? Math.round(value / max * 100) + '%' : '0%';
             const elapsed = msToHMS(Date.now() - stats.startTime.getTime());
             const remaining = msToHMS(stats.etr);
 
-            // CREATE HTML (Using fixed-width spans from CSS)
             const barHtml = `
             <span class="stat-box stat-progress">${percent} (${value}/${max})</span>
             <span class="stat-box stat-elapsed">Elapsed: ${elapsed}</span>
             <span class="stat-box stat-remaining">Remaining: ${remaining}</span>
         `;
 
-            // Update Footer
-            ui.percent.innerHTML = barHtml;
+            // Update Footer (with null check)
+            if (ui.percent) {
+                ui.percent.innerHTML = barHtml;
+            }
 
-            // Update Header Status (The "Gray Gap")
+            // Update Header Status
             const statusEl = document.getElementById('status');
             if (statusEl) {
-                // Only update if the script is running, so we don't overwrite "Scan complete"
                 if (state.running) {
                     statusEl.innerHTML = barHtml;
                 }
             }
 
-            // Progress Bar
-            ui.progressIcon.value = value;
-            ui.progressMain.value = value;
-
-            if (max) {
-                ui.progressIcon.setAttribute('max', max);
-                ui.progressMain.setAttribute('max', max);
-            } else {
-                ui.progressIcon.removeAttribute('value');
-                ui.progressMain.removeAttribute('value');
+            // Progress Bar (with null checks)
+            if (ui.progressIcon) {
+                ui.progressIcon.value = value;
+            }
+            if (ui.progressMain) {
+                ui.progressMain.value = value;
             }
 
-            // Sync Delays
+            if (max) {
+                if (ui.progressIcon) ui.progressIcon.setAttribute('max', max);
+                if (ui.progressMain) ui.progressMain.setAttribute('max', max);
+            } else {
+                if (ui.progressIcon) ui.progressIcon.removeAttribute('value');
+                if (ui.progressMain) ui.progressMain.removeAttribute('value');
+            }
+
+            // Sync Delays (with null checks)
             const searchDelayInput = $('input#searchDelay');
-            searchDelayInput.value = undiscordCore.options.searchDelay;
-            $('div#searchDelayValue').textContent = undiscordCore.options.searchDelay + 'ms';
+            const searchDelayValueEl = $('div#searchDelayValue');
+            if (searchDelayInput && searchDelayValueEl) {
+                searchDelayInput.value = undiscordCore.options.searchDelay;
+                searchDelayValueEl.textContent = undiscordCore.options.searchDelay + 'ms';
+            }
 
             const deleteDelayInput = $('input#deleteDelay');
-            deleteDelayInput.value = undiscordCore.options.deleteDelay;
-            $('div#deleteDelayValue').textContent = undiscordCore.options.deleteDelay + 'ms';
+            const deleteDelayValueEl = $('div#deleteDelayValue');
+            if (deleteDelayInput && deleteDelayValueEl) {
+                deleteDelayInput.value = undiscordCore.options.deleteDelay;
+                deleteDelayValueEl.textContent = undiscordCore.options.deleteDelay + 'ms';
+            }
         };
 
         undiscordCore.onStop = (state, stats) => {
@@ -1928,35 +2263,70 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
 
     async function startAction() {
         console.log(PREFIX, 'startAction');
-        // general
         const authorId = $('input#authorId').value.trim();
         const guildId = $('input#guildId').value.trim();
         const channelIds = $('input#channelId').value.trim().split(/\s*,\s*/);
         const includeNsfw = $('input#includeNsfw').checked;
-        // filter
         const content = $('input#search').value.trim();
         const hasLink = $('input#hasLink').checked;
         const hasFile = $('input#hasFile').checked;
         const includePinned = $('input#includePinned').checked;
         const pattern = $('input#pattern').value;
-        // message interval
+
+        const skipLink = $('input#skipLink').checked;
+        const skipFile = $('input#skipFile').checked;
+        const skipPinned = $('input#skipPinned').checked;
+        const mediaMode = $('input#mediaMode').checked;
+
+        let mediaModeType = 'media_only';
+        if (document.getElementById('stratAll').checked) mediaModeType = 'all';
+
         const minId = $('input#minId').value.trim();
         const maxId = $('input#maxId').value.trim();
-        // date range
         const minDate = $('input#minDate').value.trim();
         const maxDate = $('input#maxDate').value.trim();
-        //advanced
         const searchDelay = parseInt($('input#searchDelay').value.trim());
         const deleteDelay = parseInt($('input#deleteDelay').value.trim());
-
-        // token
         const authToken = $('input#token').value.trim() || fillToken();
-        if (!authToken) return; // get token already logs an error.
+        if (!authToken) return;
 
-        // validate input
         if (!guildId) return log.error('You must fill the "Server ID" field!');
 
-        // clear logArea
+        // --- TITLE PARSER (Clean Server Name) ---
+        let rawTitle = document.title;
+
+        // 1. Remove Notification Count: "(1) " or "(99+) "
+        rawTitle = rawTitle.replace(/^\(\d+\+?\)\s*/, "");
+
+        // 2. Remove " | Discord" or " - Discord" from the specific end of the string
+        rawTitle = rawTitle.replace(/[\s|\|\-]*Discord$/, "");
+
+        // 3. Split by Pipe "|"
+        // Filter out any empty strings or leftover "Discord" text
+        let parts = rawTitle.split("|").map(s => s.trim()).filter(s => s.length > 0 && s !== "Discord");
+
+        let serverName = "Unknown Server";
+        let channelName = "Unknown Channel";
+
+        if (parts.length >= 2) {
+            // Standard: "Channel Name | Server Name"
+            // parts[0] is Channel
+            // parts[1] is Server
+            channelName = parts[0];
+            serverName = parts[1];
+        } else if (parts.length === 1) {
+            // DMs: "@User"
+            channelName = parts[0];
+            serverName = "Direct Messages";
+        }
+
+        // Sanitize for Windows Filenames
+        serverName = serverName.replace(/[<>:"/\\|?*]/g, '_');
+        channelName = channelName.replace(/[<>:"/\\|?*]/g, '_');
+
+        log.info(`Folder Target: ${serverName} \\ ${channelName}`);
+        // ---------------------------------------
+
         ui.logArea.innerHTML = '';
 
         undiscordCore.resetState();
@@ -1965,7 +2335,7 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
             authToken,
             authorId,
             guildId,
-            channelId: channelIds.length === 1 ? channelIds[0] : undefined, // single or multiple channel
+            channelId: channelIds.length === 1 ? channelIds[0] : undefined,
             minId: minId || minDate,
             maxId: maxId || maxDate,
             content,
@@ -1981,22 +2351,34 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
             autoSave: $('input#autoSave').checked,
             saveMessagesOnlySave: $('input#saveMessagesOnlySave').checked,
             autoClear: $('input#autoClear').checked,
-            // maxAttempt: 2,
+
+            skipLink,
+            skipFile,
+            skipPinned,
+            mediaMode,
+            mediaModeType,
+
+            // Pass Correct Folder Names
+            serverName,
+            channelName,
         };
+
+        if (mediaMode) {
+            const modeText = mediaModeType === 'media_only' ? "MEDIA ONLY (Strict)" : "SCAN ALL (Text+Media)";
+            if (!confirm(`Starting INTERACTIVE MEDIA MODE.\n\nStrategy: ${modeText}\n\n1. I will scan messages.\n2. I will pause for selection.\n3. You select items to DOWNLOAD.\n\nReady?`)) return;
+        }
+
         if (channelIds.length > 1) {
             const jobs = channelIds.map(ch => ({
                 guildId: guildId,
-                channelId: ch,
+                channelId: ch
             }));
-
             try {
                 await undiscordCore.runBatch(jobs);
             } catch (err) {
                 log.error('CoreException', err);
             }
-        }
-        // single channel
-        else {
+        } else {
             try {
                 await undiscordCore.run();
             } catch (err) {
