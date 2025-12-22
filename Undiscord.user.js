@@ -890,7 +890,6 @@
                 try {
                     await this.search();
                 } catch (err) {
-                    // If search threw an error (like 403), state.running might be false now.
                     if (!this.state.running) break;
                 }
 
@@ -970,6 +969,7 @@
                                         }
                                     }
                                 }
+                                log.info("All downloads in batch complete.");
                             }
                         };
 
@@ -1053,7 +1053,7 @@
 
                         if (!this.options.mediaMode && await this.confirm() === false) {
                             this.state.running = false;
-                            this.state.stoppedByUser = true; // MARK USER STOP
+                            this.state.stoppedByUser = true;
                             break;
                         }
 
@@ -1088,6 +1088,11 @@
                 }
 
                 const finalWait = cooldownOverride !== null ? cooldownOverride : this.options.searchDelay;
+
+                // --- ADDED FEEDBACK LOG HERE ---
+                log.info(`Action complete. Waiting ${(finalWait / 1000).toFixed(0)}s before next batch...`);
+                // -------------------------------
+
                 await this.wait(finalWait);
 
             } while (this.state.running);
