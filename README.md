@@ -1,4 +1,4 @@
-# Undiscord (Fixed 2025) - Delete all messages in a Discord channel or DM
+# Undiscord (Fixed 2025) - Delete and Backup all messages and media in Discord
 
 > **This is a maintained fork of the original Undiscord.**  
 > It fixes recent API errors (401/403), adds a visual Media Manager, Auto-Backups, and Folder Organization.
