@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Undiscord by Aerial
 // @description     Delete and Backup all messages and media in Discord
-// @version         5.3.2
+// @version         5.3.3
 // @author          AerialJustice
 // @homepageURL     https://github.com/AerialJustice/undiscord-fixed-2025
 // @supportURL      https://github.com/AerialJustice/undiscord-fixed-2025/discussions
@@ -20,7 +20,7 @@
     'use strict';
 
     /* rollup-plugin-baked-env */
-    const VERSION = "5.3.2";
+    const VERSION = "5.3.3";
 
     var themeCss = (`
 /* UNDISCORD STANDALONE THEME */
@@ -1967,17 +1967,25 @@ body.undiscord-pick-message.after [id^="message-content-"]:hover::after {
             moveHandle: $('.header')
         });
 
-        function mountBtn() {
+        // create undiscord Trash icon
+        ui.undiscordBtn = createElm(buttonHtml);
+        ui.undiscordBtn.onclick = toggleWindow;
+
+        function mountBtn() { // Language-agnostic toolbar mounting, fallback and failsafe by BenjaminBoho
             let toolbar = document.querySelector('[class*="toolbar"]') ||
                 document.querySelector('[role="toolbar"]') ||
                 document.querySelector('[class*="header"] [role="navigation"]') ||
-                document.querySelector('[data-list-id="app-mount"] > div > div');
-            if (toolbar && !toolbar.contains(ui.undiscordBtn)) {
+                document.querySelector('[data-list-id="app-mount"] > div > div'); // Failsafe: Root app shell.
+
+            if (!toolbar) return;
+
+            if (!toolbar.contains(ui.undiscordBtn)) {
                 toolbar.insertBefore(ui.undiscordBtn, toolbar.firstChild);
             }
         }
         mountBtn();
 
+        // watch for changes and re-mount button if necessary
         const discordElm = document.body;
         let observerThrottle = null;
         const observer = new MutationObserver((_mutationsList, _observer) => {
